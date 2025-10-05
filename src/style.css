@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica,
+      Arial, sans-serif;
+    @apply bg-[#F6F7F8] text-[#1B1B1F];
+    line-height: 1.5;
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      @apply bg-[#111315] text-[#EAEAEA];
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto,
+      Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ========================================
+   COMPONENTS
+   ======================================== */
+@layer components {
+  .surface {
+    @apply bg-white;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .surface {
+      @apply bg-[#1E2124];
+    }
+  }
+
+  /* iOS Safe Area Support */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Prevent text selection on tap (iOS feel) */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Touch feedback */
+  .touch-feedback {
+    transition: transform 120ms ease-out, opacity 120ms ease-out;
+  }
+
+  .touch-feedback:active {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .touch-feedback {
+      transition: none;
+    }
+    .touch-feedback:active {
+      transform: none;
+    }
+  }
+}

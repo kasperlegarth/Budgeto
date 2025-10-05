@@ -1,0 +1,71 @@
+[
+  {
+    "id": "mad",
+    "navn": "Mad & Drikke",
+    "icon": "restaurant",
+    "underkategorier": [
+      { "id": "dagligvarer", "navn": "Dagligvarer", "icon": "shopping-cart-02" },
+      { "id": "restaurant", "navn": "Restaurant", "icon": "restaurant-02" },
+      { "id": "cafe", "navn": "Café", "icon": "coffee-01" }
+    ]
+  },
+  {
+    "id": "transport",
+    "navn": "Transport",
+    "icon": "car-01",
+    "underkategorier": [
+      { "id": "benzin", "navn": "Benzin", "icon": "fuel-01" },
+      { "id": "kollektiv", "navn": "Kollektiv trafik", "icon": "bus-01" },
+      { "id": "parkering", "navn": "Parkering", "icon": "parking-area-square" }
+    ]
+  },
+  {
+    "id": "bolig",
+    "navn": "Bolig",
+    "icon": "home-01",
+    "underkategorier": [
+      { "id": "husleje", "navn": "Husleje", "icon": "home-02" },
+      { "id": "el", "navn": "El & Varme", "icon": "lightning-01" },
+      { "id": "internet", "navn": "Internet & TV", "icon": "wifi-01" }
+    ]
+  },
+  {
+    "id": "shopping",
+    "navn": "Shopping",
+    "icon": "shopping-bag-01",
+    "underkategorier": [
+      { "id": "toj", "navn": "Tøj & Sko", "icon": "shirt-01" },
+      { "id": "elektronik", "navn": "Elektronik", "icon": "laptop-01" },
+      { "id": "diverse", "navn": "Diverse", "icon": "shopping-basket-01" }
+    ]
+  },
+  {
+    "id": "fritid",
+    "navn": "Fritid",
+    "icon": "football",
+    "underkategorier": [
+      { "id": "sport", "navn": "Sport & Fitness", "icon": "dumbbell-01" },
+      { "id": "streaming", "navn": "Streaming", "icon": "tv-01" },
+      { "id": "hobby", "navn": "Hobby", "icon": "paint-board" }
+    ]
+  },
+  {
+    "id": "sundhed",
+    "navn": "Sundhed",
+    "icon": "hospital-01",
+    "underkategorier": [
+      { "id": "apotek", "navn": "Apotek", "icon": "medicine-01" },
+      { "id": "laege", "navn": "Læge", "icon": "stethoscope" }
+    ]
+  },
+  {
+    "id": "lon",
+    "navn": "Løn",
+    "icon": "money-bag-01"
+  },
+  {
+    "id": "andet",
+    "navn": "Andet",
+    "icon": "menu-circle"
+  }
+]
