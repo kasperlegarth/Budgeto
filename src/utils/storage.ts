@@ -60,9 +60,59 @@ function createInitialState(): AppState {
 }
 
 /**
+ * Migrerer kategorier fra gamle `navn` felt til `nameKey` felt
+ * Tilføjer nameKey baseret på kategori ID hvis det mangler
+ */
+function migrateCategories(state: AppState): void {
+  let migrated = false;
+
+  state.kategorier = state.kategorier.map((kategori) => {
+    // Hvis nameKey mangler, tilføj det baseret på ID
+    if (!kategori.nameKey && kategori.id) {
+      migrated = true;
+      const updated = { ...kategori, nameKey: `categories.${kategori.id}` };
+
+      // Migrer underkategorier
+      if (updated.underkategorier) {
+        updated.underkategorier = updated.underkategorier.map((underkat) => {
+          if (!underkat.nameKey && underkat.id) {
+            return { ...underkat, nameKey: `categories.${underkat.id}` };
+          }
+          return underkat;
+        });
+      }
+
+      return updated;
+    }
+
+    // Migrer underkategorier selv hvis kategori har nameKey
+    if (kategori.underkategorier) {
+      const updatedUnderkategorier = kategori.underkategorier.map((underkat) => {
+        if (!underkat.nameKey && underkat.id) {
+          migrated = true;
+          return { ...underkat, nameKey: `categories.${underkat.id}` };
+        }
+        return underkat;
+      });
+
+      if (migrated) {
+        return { ...kategori, underkategorier: updatedUnderkategorier };
+      }
+    }
+
+    return kategori;
+  });
+
+  if (migrated) {
+    console.log('Migration: Kategorier opdateret med nameKey felter');
+  }
+}
+
+/**
  * Initialiserer app state
  * - Opretter ny state hvis ikke eksisterer
  * - Auto-reset variable posteringer ved månedsskifte
+ * - Migrerer kategorier til nameKey format
  * @returns AppState
  */
 export function initAppState(): AppState {
@@ -76,6 +126,9 @@ export function initAppState(): AppState {
     return state;
   }
 
+  // Migrer kategorier til nameKey format
+  migrateCategories(state);
+
   // Tjek om vi skal auto-reset variable posteringer
   const lastOpenedISO = localStorage.getItem(STORAGE_KEYS.LAST_OPENED_ISO);
   const now = nowInCopenhagen();
@@ -86,6 +139,9 @@ export function initAppState(): AppState {
     state.sidsteResetISO = firstDayOfMonth(now);
     saveAppState(state);
     console.log('Auto-reset: Variable posteringer nulstillet for ny måned');
+  } else {
+    // Gem migreret state
+    saveAppState(state);
   }
 
   // Opdater last opened

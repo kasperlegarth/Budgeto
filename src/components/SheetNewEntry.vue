@@ -5,11 +5,13 @@
  */
 
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
 import SheetAddCategory from './SheetAddCategory.vue';
 import { parseDKK } from '../utils/money';
 import { withLock } from '../utils/storage';
+import { getCategoryName } from '../utils/category';
 import type { EntryType, Category, VariableEntry } from '../types';
 
 interface Props {
@@ -24,6 +26,7 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const { t } = useI18n();
 
 // Form state
 const entryType = ref<EntryType>('udgift');
@@ -92,7 +95,7 @@ const handleSubmit = async () => {
     // Parse beløb
     const beloeb_ore = parseDKK(beloebInput.value);
     if (beloeb_ore === null || beloeb_ore <= 0) {
-      error.value = 'Indtast et gyldigt beløb';
+      error.value = t('newEntry.errorInvalidAmount');
       isSubmitting.value = false;
       return;
     }
@@ -126,7 +129,7 @@ const handleSubmit = async () => {
     emit('update:modelValue', false);
     reset();
   } catch (err) {
-    error.value = 'Kunne ikke gemme postering';
+    error.value = t('newEntry.errorSaveFailed');
     console.error('Save error:', err);
   } finally {
     isSubmitting.value = false;
@@ -148,11 +151,11 @@ watch(entryType, (newType) => {
 </script>
 
 <template>
-  <BottomSheet :model-value="modelValue" title="Ny postering" @update:model-value="handleClose">
+  <BottomSheet :model-value="modelValue" :title="t('newEntry.title')" @update:model-value="handleClose">
     <form @submit.prevent="handleSubmit" class="space-y-5">
       <!-- Type selector -->
       <div>
-        <label class="label">Type</label>
+        <label class="label">{{ t('newEntry.typeLabel') }}</label>
         <div class="flex gap-2">
           <button
             type="button"
@@ -160,7 +163,7 @@ watch(entryType, (newType) => {
             @click="entryType = 'udgift'"
           >
             <UiIcon name="shopping-cart-02" :size="20" />
-            Udgift
+            {{ t('entryTypes.expense') }}
           </button>
           <button
             type="button"
@@ -168,20 +171,20 @@ watch(entryType, (newType) => {
             @click="entryType = 'indtægt'"
           >
             <UiIcon name="money-bag-01" :size="20" />
-            Indtægt
+            {{ t('entryTypes.income') }}
           </button>
         </div>
       </div>
 
       <!-- Beløb -->
       <div>
-        <label for="beloeb" class="label">Beløb</label>
+        <label for="beloeb" class="label">{{ t('newEntry.amountLabel') }}</label>
         <input
           id="beloeb"
           v-model="beloebInput"
           type="text"
           inputmode="decimal"
-          placeholder="0,00"
+          :placeholder="t('newEntry.amountPlaceholder')"
           class="input"
           autofocus
         />
@@ -190,42 +193,42 @@ watch(entryType, (newType) => {
       <!-- Kategori (kun for udgifter) -->
       <div v-if="entryType === 'udgift'">
         <div class="flex items-center justify-between mb-2">
-          <label for="kategori" class="label mb-0">Kategori</label>
+          <label for="kategori" class="label mb-0">{{ t('newEntry.categoryLabel') }}</label>
           <button
             type="button"
             class="btn-add-category"
             @click="showAddCategory = true"
           >
             <UiIcon name="add" :size="16" />
-            Tilføj kategori
+            {{ t('newEntry.addCategory') }}
           </button>
         </div>
         <select id="kategori" v-model="selectedKategoriId" class="input">
-          <option value="">Vælg kategori...</option>
+          <option value="">{{ t('newEntry.categoryPlaceholder') }}</option>
           <option v-for="kat in kategorier" :key="kat.id" :value="kat.id">
-            {{ kat.navn }}
+            {{ getCategoryName(kat, t) }}
           </option>
         </select>
       </div>
 
       <!-- Underkategori (hvis valgt kategori har nogen) -->
       <div v-if="entryType === 'udgift' && underkategorier.length > 0">
-        <label for="underkategori" class="label">Underkategori (valgfri)</label>
+        <label for="underkategori" class="label">{{ t('newEntry.subcategoryLabel') }} ({{ t('common.optional') }})</label>
         <select id="underkategori" v-model="selectedUnderkategoriId" class="input">
-          <option value="">Ingen</option>
+          <option value="">{{ t('common.none') }}</option>
           <option v-for="underkat in underkategorier" :key="underkat.id" :value="underkat.id">
-            {{ underkat.navn }}
+            {{ getCategoryName(underkat, t) }}
           </option>
         </select>
       </div>
 
       <!-- Note -->
       <div>
-        <label for="note" class="label">Note (valgfri)</label>
+        <label for="note" class="label">{{ t('newEntry.noteLabel') }} ({{ t('common.optional') }})</label>
         <textarea
           id="note"
           v-model="note"
-          placeholder="Tilføj en note..."
+          :placeholder="t('newEntry.notePlaceholder')"
           class="input"
           rows="2"
         ></textarea>
@@ -242,7 +245,7 @@ watch(entryType, (newType) => {
         :disabled="!canSubmit || isSubmitting"
         class="btn-primary"
       >
-        {{ isSubmitting ? 'Gemmer...' : 'Gem postering' }}
+        {{ isSubmitting ? t('newEntry.savingButton') : t('newEntry.saveButton') }}
       </button>
     </form>
 

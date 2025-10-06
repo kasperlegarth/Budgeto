@@ -18,7 +18,7 @@ interface Emits {
   (e: 'saved'): void;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 // Form state

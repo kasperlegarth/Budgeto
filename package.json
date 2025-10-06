@@ -13,7 +13,8 @@
   "dependencies": {
     "@hugeicons/core-free-icons": "^1.1.0",
     "@hugeicons/vue": "^1.0.3",
-    "vue": "^3.5.22"
+    "vue": "^3.5.22",
+    "vue-i18n": "^11.1.12"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",

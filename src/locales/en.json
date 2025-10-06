@@ -1,0 +1,149 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "next": "Next",
+    "skip": "Skip",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "optional",
+    "none": "None"
+  },
+  "app": {
+    "name": "Budgeto",
+    "tagline": "Simple budgeting",
+    "privacyNote": "All data is stored locally on your device"
+  },
+  "kpi": {
+    "mainBalance": "Main balance",
+    "remainingThisMonth": "Remaining this month",
+    "spentThisMonth": "Spent this month"
+  },
+  "entryTypes": {
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "categories": {
+    "mad": "Food & Drinks",
+    "transport": "Transport",
+    "bolig": "Housing",
+    "shopping": "Shopping",
+    "fritid": "Leisure",
+    "sundhed": "Health",
+    "lon": "Salary",
+    "andet": "Other",
+    "dagligvarer": "Groceries",
+    "restaurant": "Restaurant",
+    "cafe": "Café",
+    "benzin": "Gas",
+    "kollektiv": "Public Transport",
+    "parkering": "Parking",
+    "husleje": "Rent",
+    "el": "Electricity & Heating",
+    "internet": "Internet & TV",
+    "toj": "Clothes & Shoes",
+    "elektronik": "Electronics",
+    "diverse": "Miscellaneous",
+    "sport": "Sports & Fitness",
+    "streaming": "Streaming",
+    "hobby": "Hobby",
+    "apotek": "Pharmacy",
+    "laege": "Doctor"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Welcome to Budgeto",
+      "description": "Keep track of your finances the easy way. Everything is stored locally on your device."
+    },
+    "step2": {
+      "title": "Add your expenses",
+      "description": "Track variable expenses like food, transport and shopping throughout the month."
+    },
+    "step3": {
+      "title": "Fixed entries",
+      "description": "Add fixed income (salary) and expenses (rent, utilities) that occur on the 1st of each month."
+    },
+    "step4": {
+      "title": "Auto-reset every month",
+      "description": "Variable entries are automatically reset when a new month starts."
+    },
+    "getStarted": "Get started"
+  },
+  "emptyState": {
+    "noExpenses": {
+      "title": "No expenses yet",
+      "description": "Tap + to add your first expense"
+    },
+    "noEntries": {
+      "title": "No entries yet",
+      "description": "Tap the + button to add your first expense or income"
+    },
+    "noFixedEntries": {
+      "title": "No fixed entries",
+      "description": "Add fixed income and expenses here"
+    }
+  },
+  "newEntry": {
+    "title": "New entry",
+    "typeLabel": "Type",
+    "amountLabel": "Amount",
+    "amountPlaceholder": "0.00",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select category...",
+    "subcategoryLabel": "Subcategory",
+    "noteLabel": "Note",
+    "notePlaceholder": "Add a note...",
+    "saveButton": "Save entry",
+    "savingButton": "Saving...",
+    "addCategory": "Add category",
+    "errorInvalidAmount": "Enter a valid amount",
+    "errorSaveFailed": "Could not save entry"
+  },
+  "fixedEntries": {
+    "title": "Fixed entries",
+    "incomeSection": "Fixed income",
+    "expenseSection": "Fixed expenses",
+    "addIncome": "Add income",
+    "addExpense": "Add expense",
+    "deleteConfirm": "Delete this entry?"
+  },
+  "settings": {
+    "title": "Settings",
+    "appInfo": "App information",
+    "version": "Version",
+    "type": "Type",
+    "typeValue": "Offline PWA",
+    "appearanceSection": "Appearance",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeAuto": "Auto",
+    "languageSection": "Language",
+    "languageDanish": "Dansk",
+    "languageEnglish": "English",
+    "languageAuto": "Auto",
+    "categoriesSection": "My categories",
+    "noCategoriesYet": "You haven't added any custom categories yet",
+    "dangerZone": "Danger zone",
+    "resetDescription": "Reset all data and start fresh. This action cannot be undone.",
+    "resetButton": "Reset all data",
+    "resetConfirmTitle": "Are you sure?",
+    "resetConfirmText": "This will delete ALL your entries, fixed income/expenses and data. This action cannot be undone.",
+    "resetConfirmButton": "Yes, reset everything",
+    "deleteCategory": "Delete category"
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "add": "Add",
+    "move": "Move",
+    "send": "Send",
+    "details": "Details"
+  },
+  "entriesList": {
+    "title": "Entries this month",
+    "deleteConfirm": "Delete this entry?"
+  }
+}

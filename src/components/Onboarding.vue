@@ -4,7 +4,8 @@
  * Vises ved første åbning eller efter total reset
  */
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import { completeOnboarding } from '../utils/storage';
 
@@ -13,34 +14,35 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>();
+const { t } = useI18n();
 
 const step = ref(0);
 
-const steps = [
+const steps = computed(() => [
   {
     icon: 'money-bag-01',
-    title: 'Velkommen til Budgeto',
-    description: 'Hold styr på din økonomi på den nemme måde. Alt gemmes lokalt på din enhed.',
+    title: t('onboarding.step1.title'),
+    description: t('onboarding.step1.description'),
   },
   {
     icon: 'restaurant',
-    title: 'Tilføj dine udgifter',
-    description: 'Registrer variable udgifter som mad, transport og shopping løbende gennem måneden.',
+    title: t('onboarding.step2.title'),
+    description: t('onboarding.step2.description'),
   },
   {
     icon: 'home-01',
-    title: 'Faste posteringer',
-    description: 'Tilføj faste indtægter (løn) og udgifter (husleje, el) som kommer hver måned d. 1.',
+    title: t('onboarding.step3.title'),
+    description: t('onboarding.step3.description'),
   },
   {
     icon: 'lightning-01',
-    title: 'Auto-reset hver måned',
-    description: 'Variable posteringer nulstilles automatisk når en ny måned starter.',
+    title: t('onboarding.step4.title'),
+    description: t('onboarding.step4.description'),
   },
-];
+]);
 
 const handleNext = () => {
-  if (step.value < steps.length - 1) {
+  if (step.value < steps.value.length - 1) {
     step.value++;
   } else {
     completeOnboarding();
@@ -82,10 +84,10 @@ const handleSkip = () => {
       <!-- Actions -->
       <div class="actions">
         <button v-if="step < steps.length - 1" class="btn-secondary" @click="handleSkip">
-          Spring over
+          {{ t('common.skip') }}
         </button>
         <button class="btn-primary" @click="handleNext">
-          {{ step < steps.length - 1 ? 'Næste' : 'Kom i gang' }}
+          {{ step < steps.length - 1 ? t('common.next') : t('onboarding.getStarted') }}
         </button>
       </div>
     </div>

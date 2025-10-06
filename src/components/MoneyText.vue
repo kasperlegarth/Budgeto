@@ -5,6 +5,7 @@
  */
 
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { formatDKK, type DKK_ore } from '../utils/money';
 
 interface Props {
@@ -20,8 +21,11 @@ const props = withDefaults(defineProps<Props>(), {
   showSign: false,
 });
 
+const { locale } = useI18n();
+
 const formatted = computed(() => {
-  const base = formatDKK(props.amount);
+  const currentLocale = locale.value as 'da' | 'en';
+  const base = formatDKK(props.amount, true, currentLocale);
   if (props.showSign && props.amount > 0) {
     return `+${base}`;
   }

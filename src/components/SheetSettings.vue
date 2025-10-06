@@ -9,6 +9,9 @@ import UiIcon from './UiIcon.vue';
 import SheetAddCategory from './SheetAddCategory.vue';
 import { resetAllData, withLock } from '../utils/storage';
 import { useTheme, type Theme } from '../composables/useTheme';
+import { useI18n } from 'vue-i18n';
+import { getCategoryName } from '../utils/category';
+import { useLocale, type Locale } from '../composables/useLocale';
 import type { Category } from '../types';
 
 interface Props {
@@ -26,6 +29,8 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { currentTheme, setTheme } = useTheme();
+const { t } = useI18n();
+const { currentLocale, setLocale } = useLocale();
 const showResetConfirm = ref(false);
 const showAddCategory = ref(false);
 
@@ -46,9 +51,15 @@ const handleDeleteCategory = async (id: string) => {
 };
 
 const themeOptions: { value: Theme; label: string; icon: string }[] = [
-  { value: 'light', label: 'Lys', icon: 'sun' },
-  { value: 'dark', label: 'Mørk', icon: 'moon' },
-  { value: 'auto', label: 'Auto', icon: 'settings-02' },
+  { value: 'light', label: t('settings.themeLight'), icon: 'sun' },
+  { value: 'dark', label: t('settings.themeDark'), icon: 'moon' },
+  { value: 'auto', label: t('settings.themeAuto'), icon: 'settings-02' },
+];
+
+const localeOptions: { value: Locale; label: string; icon: string }[] = [
+  { value: 'da', label: t('settings.languageDanish'), icon: 'flag-01' },
+  { value: 'en', label: t('settings.languageEnglish'), icon: 'flag-02' },
+  { value: 'auto', label: t('settings.languageAuto'), icon: 'settings-02' },
 ];
 
 const handleReset = () => {
@@ -68,17 +79,17 @@ const handleClose = () => {
 </script>
 
 <template>
-  <BottomSheet :model-value="modelValue" title="Indstillinger" @update:model-value="handleClose">
+  <BottomSheet :model-value="modelValue" :title="t('settings.title')" @update:model-value="handleClose">
     <div class="space-y-6">
       <!-- App info -->
       <div class="info-section">
         <div class="info-row">
-          <span class="info-label">Version</span>
+          <span class="info-label">{{ t('settings.version') }}</span>
           <span class="info-value">0.1.0 MVP</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Type</span>
-          <span class="info-value">Offline PWA</span>
+          <span class="info-label">{{ t('settings.type') }}</span>
+          <span class="info-value">{{ t('settings.typeValue') }}</span>
         </div>
       </div>
 
@@ -86,7 +97,7 @@ const handleClose = () => {
 
       <!-- Theme section -->
       <div>
-        <h3 class="section-title">Udseende</h3>
+        <h3 class="section-title">{{ t('settings.appearanceSection') }}</h3>
         <div class="theme-options">
           <button
             v-for="option in themeOptions"
@@ -100,20 +111,36 @@ const handleClose = () => {
         </div>
       </div>
 
+      <!-- Language section -->
+      <div>
+        <h3 class="section-title">{{ t('settings.languageSection') }}</h3>
+        <div class="theme-options">
+          <button
+            v-for="option in localeOptions"
+            :key="option.value"
+            :class="['theme-option', currentLocale === option.value && 'theme-option-active']"
+            @click="setLocale(option.value)"
+          >
+            <UiIcon :name="option.icon" :size="20" />
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
+      </div>
+
       <div class="divider"></div>
 
       <!-- Kategorier section -->
       <div>
         <div class="flex items-center justify-between mb-3">
-          <h3 class="section-title mb-0">Mine kategorier</h3>
+          <h3 class="section-title mb-0">{{ t('settings.categoriesSection') }}</h3>
           <button class="btn-add-small" @click="showAddCategory = true">
             <UiIcon name="add" :size="16" />
-            Tilføj
+            {{ t('common.add') }}
           </button>
         </div>
 
         <div v-if="customKategorier.length === 0" class="text-secondary text-center">
-          Du har ikke tilføjet nogen egne kategorier endnu
+          {{ t('settings.noCategoriesYet') }}
         </div>
 
         <div v-else class="space-y-2">
@@ -126,7 +153,7 @@ const handleClose = () => {
               <div class="category-icon">
                 <UiIcon :name="kategori.icon" :size="20" />
               </div>
-              <span class="category-name">{{ kategori.navn }}</span>
+              <span class="category-name">{{ getCategoryName(kategori, t) }}</span>
             </div>
             <button
               class="btn-delete-icon"
@@ -143,13 +170,13 @@ const handleClose = () => {
 
       <!-- Reset section -->
       <div v-if="!showResetConfirm">
-        <h3 class="section-title">Farligt område</h3>
+        <h3 class="section-title">{{ t('settings.dangerZone') }}</h3>
         <p class="text-secondary mb-3">
-          Nulstil al data og start forfra. Denne handling kan ikke fortrydes.
+          {{ t('settings.resetDescription') }}
         </p>
         <button class="btn-danger" @click="showResetConfirm = true">
           <UiIcon name="close" :size="20" />
-          Nulstil al data
+          {{ t('settings.resetButton') }}
         </button>
       </div>
 
@@ -158,16 +185,16 @@ const handleClose = () => {
         <div class="confirm-icon">
           <UiIcon name="close" :size="32" />
         </div>
-        <h3 class="confirm-title">Er du sikker?</h3>
+        <h3 class="confirm-title">{{ t('settings.resetConfirmTitle') }}</h3>
         <p class="confirm-text">
-          Dette vil slette ALLE dine posteringer, faste indtægter/udgifter og data. Handlingen kan ikke fortrydes.
+          {{ t('settings.resetConfirmText') }}
         </p>
         <div class="confirm-actions">
           <button class="btn-secondary" @click="showResetConfirm = false">
-            Annuller
+            {{ t('common.cancel') }}
           </button>
           <button class="btn-danger" @click="handleReset">
-            Ja, nulstil alt
+            {{ t('settings.resetConfirmButton') }}
           </button>
         </div>
       </div>
@@ -177,8 +204,8 @@ const handleClose = () => {
       <!-- Footer -->
       <div class="footer-text">
         <p class="text-center text-secondary">
-          Budgeto — Simpel budgettering<br />
-          Alle data gemmes lokalt på din enhed
+          {{ t('app.tagline') }}<br />
+          {{ t('app.privacyNote') }}
         </p>
       </div>
     </div>

@@ -26,13 +26,15 @@ export interface VariableEntry extends BaseEntry {
 
 export interface Subcategory {
   id: string;
-  navn: string;
+  navn?: string; // Deprecated: Kun for backward compatibility
+  nameKey?: string; // Translation key (fx "categories.dagligvarer")
   icon?: string;
 }
 
 export interface Category {
   id: string;
-  navn: string;
+  navn?: string; // Deprecated: Kun for backward compatibility
+  nameKey?: string; // Translation key (fx "categories.mad")
   icon: string;
   color?: string;
   underkategorier?: Subcategory[];

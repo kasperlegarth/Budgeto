@@ -5,10 +5,12 @@
  */
 
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import MoneyText from './MoneyText.vue';
 import { formatDateTimeDK } from '../utils/date';
 import { withLock } from '../utils/storage';
+import { getCategoryName } from '../utils/category';
 import type { VariableEntry, Category } from '../types';
 
 interface Props {
@@ -22,6 +24,8 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const { t } = useI18n();
 
 // Grupper entries per dag
 const entriesByDay = computed(() => {
@@ -48,7 +52,8 @@ const entriesByDay = computed(() => {
 });
 
 const getKategoriNavn = (kategoriId: string) => {
-  return props.kategorier.find((k) => k.id === kategoriId)?.navn || 'Ukendt';
+  const kategori = props.kategorier.find((k) => k.id === kategoriId);
+  return kategori ? getCategoryName(kategori, t) : 'Ukendt';
 };
 
 const getKategoriIcon = (kategoriId: string) => {
@@ -60,7 +65,7 @@ const getKategoriColor = (kategoriId: string) => {
 };
 
 const handleDelete = async (id: string) => {
-  if (!confirm('Er du sikker på at du vil slette denne postering?')) return;
+  if (!confirm(t('entriesList.deleteConfirm'))) return;
 
   try {
     await withLock((state) => {

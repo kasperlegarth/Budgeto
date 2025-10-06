@@ -26,20 +26,30 @@ export function oreTilKroner(ore: DKK_ore): number {
 }
 
 /**
- * Formaterer beløb i øre til dansk DKK-format med tusind-separatorer
+ * Formaterer beløb i øre til DKK-format med tusind-separatorer
  * @param ore - Beløb i øre
- * @param includeCurrency - Om "kr" skal inkluderes (default: true)
- * @returns Formateret string (fx "12.345,67 kr")
+ * @param includeCurrency - Om currency symbol skal inkluderes (default: true)
+ * @param locale - Locale for formatering ('da' eller 'en', default: 'da')
+ * @returns Formateret string (fx "12.345,67 kr" (da) eller "DKK 12,345.67" (en))
  */
-export function formatDKK(ore: DKK_ore, includeCurrency = true): string {
+export function formatDKK(
+  ore: DKK_ore,
+  includeCurrency = true,
+  locale: 'da' | 'en' = 'da'
+): string {
   const kroner = oreTilKroner(ore);
 
-  const formatted = new Intl.NumberFormat('da-DK', {
+  const localeString = locale === 'da' ? 'da-DK' : 'en-US';
+  const formatted = new Intl.NumberFormat(localeString, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(kroner);
 
-  return includeCurrency ? `${formatted} kr` : formatted;
+  if (!includeCurrency) return formatted;
+
+  // Dansk: "123,45 kr"
+  // Engelsk: "DKK 123.45"
+  return locale === 'da' ? `${formatted} kr` : `DKK ${formatted}`;
 }
 
 /**

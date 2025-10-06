@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { initAppState, shouldShowOnboarding } from './utils/storage';
 import { useTheme } from './composables/useTheme';
+import { getCategoryName } from './utils/category';
 import type { AppState } from './types';
 import MoneyText from './components/MoneyText.vue';
 import UiIcon from './components/UiIcon.vue';
@@ -15,6 +17,8 @@ import VariableEntriesList from './components/VariableEntriesList.vue';
 
 // Initialize theme
 useTheme();
+
+const { t } = useI18n();
 
 const state = ref<AppState | null>(null);
 const showNewEntry = ref(false);
@@ -63,13 +67,14 @@ const getTilbageIMåneden = () => {
   return fasteIndtaegter - fasteUdgifter - variableUdgifter + variableIndtaegter;
 };
 
-const getBrugtIMåneden = () => {
-  if (!state.value) return 0;
-
-  return state.value.variable
-    .filter((e) => e.type === 'udgift')
-    .reduce((sum, e) => sum + e.beloeb_ore, 0);
-};
+// Unused for now, but may be used later for KPI display
+// const getBrugtIMåneden = () => {
+//   if (!state.value) return 0;
+//
+//   return state.value.variable
+//     .filter((e) => e.type === 'udgift')
+//     .reduce((sum, e) => sum + e.beloeb_ore, 0);
+// };
 
 const hasVariableEntries = () => {
   return state.value && state.value.variable.length > 0;
@@ -140,7 +145,7 @@ const getCategoryColorClass = (index: number) => {
 
     <!-- Main Balance -->
     <div class="main-balance">
-      <div class="balance-label">Main balance</div>
+      <div class="balance-label">{{ t('kpi.mainBalance') }}</div>
       <div class="balance-amount">
         <MoneyText :amount="getTilbageIMåneden()" size="3xl" :show-sign="false" />
       </div>
@@ -150,27 +155,27 @@ const getCategoryColorClass = (index: number) => {
     <div class="action-buttons">
       <button class="action-btn">
         <UiIcon name="add" :size="20" />
-        <span>Add</span>
+        <span>{{ t('quickActions.add') }}</span>
       </button>
       <button class="action-btn">
         <UiIcon name="shopping-cart-02" :size="20" />
-        <span>Move</span>
+        <span>{{ t('quickActions.move') }}</span>
       </button>
       <button class="action-btn">
         <UiIcon name="lightning-01" :size="20" />
-        <span>Send</span>
+        <span>{{ t('quickActions.send') }}</span>
       </button>
       <button class="action-btn">
         <UiIcon name="menu-circle" :size="20" />
-        <span>Details</span>
+        <span>{{ t('quickActions.details') }}</span>
       </button>
     </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
       <div class="section-header">
-        <h2>Quick actions</h2>
-        <button class="edit-button">Edit</button>
+        <h2>{{ t('quickActions.title') }}</h2>
+        <button class="edit-button">{{ t('common.edit') }}</button>
       </div>
 
       <div v-if="getKategorierMedUdgifter().length > 0" class="category-grid">
@@ -184,7 +189,7 @@ const getCategoryColorClass = (index: number) => {
           <div class="category-icon">
             <UiIcon :name="item.kategori.icon" :size="24" />
           </div>
-          <div class="category-name">{{ item.kategori.navn }}</div>
+          <div class="category-name">{{ getCategoryName(item.kategori, t) }}</div>
           <div class="category-amount">
             <MoneyText :amount="item.total" size="lg" :show-sign="false" />
           </div>
@@ -194,15 +199,15 @@ const getCategoryColorClass = (index: number) => {
       <div v-else class="empty-categories">
         <EmptyState
           icon="shopping-bag-01"
-          title="Ingen udgifter endnu"
-          description="Tryk på + for at tilføje din første udgift"
+          :title="t('emptyState.noExpenses.title')"
+          :description="t('emptyState.noExpenses.description')"
         />
       </div>
     </div>
 
     <!-- Variable posteringer -->
     <div class="px-4 py-2">
-      <h2 class="text-lg font-semibold mb-3">Posteringer denne måned</h2>
+      <h2 class="text-lg font-semibold mb-3">{{ t('entriesList.title') }}</h2>
 
       <VariableEntriesList
         v-if="hasVariableEntries()"
@@ -214,8 +219,8 @@ const getCategoryColorClass = (index: number) => {
       <EmptyState
         v-else
         icon="restaurant"
-        title="Ingen posteringer endnu"
-        description="Tryk på + knappen for at tilføje din første udgift eller indtægt"
+        :title="t('emptyState.noEntries.title')"
+        :description="t('emptyState.noEntries.description')"
       />
     </div>
 

@@ -1,78 +1,78 @@
 [
   {
     "id": "mad",
-    "navn": "Mad & Drikke",
+    "nameKey": "categories.mad",
     "icon": "restaurant",
     "color": "#FF6B6B",
     "underkategorier": [
-      { "id": "dagligvarer", "navn": "Dagligvarer", "icon": "shopping-cart-02" },
-      { "id": "restaurant", "navn": "Restaurant", "icon": "restaurant-02" },
-      { "id": "cafe", "navn": "Café", "icon": "coffee-01" }
+      { "id": "dagligvarer", "nameKey": "categories.dagligvarer", "icon": "shopping-cart-02" },
+      { "id": "restaurant", "nameKey": "categories.restaurant", "icon": "restaurant-02" },
+      { "id": "cafe", "nameKey": "categories.cafe", "icon": "coffee-01" }
     ]
   },
   {
     "id": "transport",
-    "navn": "Transport",
+    "nameKey": "categories.transport",
     "icon": "car-01",
     "color": "#4ECDC4",
     "underkategorier": [
-      { "id": "benzin", "navn": "Benzin", "icon": "fuel-01" },
-      { "id": "kollektiv", "navn": "Kollektiv trafik", "icon": "bus-01" },
-      { "id": "parkering", "navn": "Parkering", "icon": "parking-area-square" }
+      { "id": "benzin", "nameKey": "categories.benzin", "icon": "fuel-01" },
+      { "id": "kollektiv", "nameKey": "categories.kollektiv", "icon": "bus-01" },
+      { "id": "parkering", "nameKey": "categories.parkering", "icon": "parking-area-square" }
     ]
   },
   {
     "id": "bolig",
-    "navn": "Bolig",
+    "nameKey": "categories.bolig",
     "icon": "home-01",
     "color": "#95E1D3",
     "underkategorier": [
-      { "id": "husleje", "navn": "Husleje", "icon": "home-02" },
-      { "id": "el", "navn": "El & Varme", "icon": "lightning-01" },
-      { "id": "internet", "navn": "Internet & TV", "icon": "wifi-01" }
+      { "id": "husleje", "nameKey": "categories.husleje", "icon": "home-02" },
+      { "id": "el", "nameKey": "categories.el", "icon": "lightning-01" },
+      { "id": "internet", "nameKey": "categories.internet", "icon": "wifi-01" }
     ]
   },
   {
     "id": "shopping",
-    "navn": "Shopping",
+    "nameKey": "categories.shopping",
     "icon": "shopping-bag-01",
     "color": "#FFB84D",
     "underkategorier": [
-      { "id": "toj", "navn": "Tøj & Sko", "icon": "shirt-01" },
-      { "id": "elektronik", "navn": "Elektronik", "icon": "laptop-01" },
-      { "id": "diverse", "navn": "Diverse", "icon": "shopping-basket-01" }
+      { "id": "toj", "nameKey": "categories.toj", "icon": "shirt-01" },
+      { "id": "elektronik", "nameKey": "categories.elektronik", "icon": "laptop-01" },
+      { "id": "diverse", "nameKey": "categories.diverse", "icon": "shopping-basket-01" }
     ]
   },
   {
     "id": "fritid",
-    "navn": "Fritid",
+    "nameKey": "categories.fritid",
     "icon": "football",
     "color": "#A8E6CF",
     "underkategorier": [
-      { "id": "sport", "navn": "Sport & Fitness", "icon": "dumbbell-01" },
-      { "id": "streaming", "navn": "Streaming", "icon": "tv-01" },
-      { "id": "hobby", "navn": "Hobby", "icon": "paint-board" }
+      { "id": "sport", "nameKey": "categories.sport", "icon": "dumbbell-01" },
+      { "id": "streaming", "nameKey": "categories.streaming", "icon": "tv-01" },
+      { "id": "hobby", "nameKey": "categories.hobby", "icon": "paint-board" }
     ]
   },
   {
     "id": "sundhed",
-    "navn": "Sundhed",
+    "nameKey": "categories.sundhed",
     "icon": "hospital-01",
     "color": "#F7B7D5",
     "underkategorier": [
-      { "id": "apotek", "navn": "Apotek", "icon": "medicine-01" },
-      { "id": "laege", "navn": "Læge", "icon": "stethoscope" }
+      { "id": "apotek", "nameKey": "categories.apotek", "icon": "medicine-01" },
+      { "id": "laege", "nameKey": "categories.laege", "icon": "stethoscope" }
     ]
   },
   {
     "id": "lon",
-    "navn": "Løn",
+    "nameKey": "categories.lon",
     "icon": "money-bag-01",
     "color": "#2A6C4F"
   },
   {
     "id": "andet",
-    "navn": "Andet",
+    "nameKey": "categories.andet",
     "icon": "menu-circle",
     "color": "#B8B8D1"
   }

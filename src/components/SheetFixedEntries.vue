@@ -5,12 +5,14 @@
  */
 
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
 import MoneyText from './MoneyText.vue';
 import EmptyState from './EmptyState.vue';
 import { parseDKK } from '../utils/money';
 import { withLock } from '../utils/storage';
+import { getCategoryName } from '../utils/category';
 import type { EntryType, Category, FixedEntry } from '../types';
 
 interface Props {
@@ -27,6 +29,8 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const { t } = useI18n();
+
 const showForm = ref(false);
 const editingId = ref<string | null>(null);
 
@@ -42,7 +46,8 @@ const fasteIndtaegter = computed(() => props.faste.filter((e) => e.type === 'ind
 const fasteUdgifter = computed(() => props.faste.filter((e) => e.type === 'udgift'));
 
 const getKategoriNavn = (kategoriId: string) => {
-  return props.kategorier.find((k) => k.id === kategoriId)?.navn || 'Ukendt';
+  const kategori = props.kategorier.find((k) => k.id === kategoriId);
+  return kategori ? getCategoryName(kategori, t) : 'Ukendt';
 };
 
 const resetForm = () => {
@@ -77,12 +82,12 @@ const handleSave = async () => {
 
   const beloeb_ore = parseDKK(formBeloeb.value);
   if (beloeb_ore === null || beloeb_ore <= 0) {
-    formError.value = 'Indtast et gyldigt beløb';
+    formError.value = t('fixedEntries.errorInvalidAmount');
     return;
   }
 
   if (!formKategoriId.value) {
-    formError.value = 'Vælg en kategori';
+    formError.value = t('fixedEntries.errorSelectCategory');
     return;
   }
 
@@ -117,13 +122,13 @@ const handleSave = async () => {
     emit('updated');
     resetForm();
   } catch (err) {
-    formError.value = 'Kunne ikke gemme';
+    formError.value = t('fixedEntries.errorSaveFailed');
     console.error('Save fixed entry error:', err);
   }
 };
 
 const handleDelete = async (id: string) => {
-  if (!confirm('Er du sikker på at du vil slette denne faste postering?')) return;
+  if (!confirm(t('fixedEntries.deleteConfirm'))) return;
 
   try {
     await withLock((state) => {
@@ -144,7 +149,7 @@ const handleClose = () => {
 <template>
   <BottomSheet
     :model-value="modelValue"
-    title="Faste posteringer"
+    :title="t('fixedEntries.title')"
     @update:model-value="handleClose"
   >
     <!-- Form view -->
@@ -155,42 +160,42 @@ const handleClose = () => {
           :class="['type-btn', formType === 'udgift' && 'type-btn-active type-btn-negative']"
           @click="formType = 'udgift'"
         >
-          Udgift
+          {{ t('fixedEntries.typeExpense') }}
         </button>
         <button
           type="button"
           :class="['type-btn', formType === 'indtægt' && 'type-btn-active type-btn-accent']"
           @click="formType = 'indtægt'"
         >
-          Indtægt
+          {{ t('fixedEntries.typeIncome') }}
         </button>
       </div>
 
       <div>
-        <label class="label">Beløb</label>
-        <input v-model="formBeloeb" type="text" inputmode="decimal" placeholder="0,00" class="input" />
+        <label class="label">{{ t('fixedEntries.amountLabel') }}</label>
+        <input v-model="formBeloeb" type="text" inputmode="decimal" :placeholder="t('fixedEntries.amountPlaceholder')" class="input" />
       </div>
 
       <div>
-        <label class="label">Kategori</label>
+        <label class="label">{{ t('fixedEntries.categoryLabel') }}</label>
         <select v-model="formKategoriId" class="input">
-          <option value="">Vælg kategori...</option>
+          <option value="">{{ t('fixedEntries.categoryPlaceholder') }}</option>
           <option v-for="kat in kategorier" :key="kat.id" :value="kat.id">
-            {{ kat.navn }}
+            {{ getCategoryName(kat, t) }}
           </option>
         </select>
       </div>
 
       <div>
-        <label class="label">Note (valgfri)</label>
-        <input v-model="formNote" type="text" placeholder="F.eks. husleje, løn..." class="input" />
+        <label class="label">{{ t('fixedEntries.noteLabel') }}</label>
+        <input v-model="formNote" type="text" :placeholder="t('fixedEntries.notePlaceholder')" class="input" />
       </div>
 
       <div v-if="formError" class="error-message">{{ formError }}</div>
 
       <div class="flex gap-2">
-        <button type="button" class="btn-secondary" @click="resetForm">Annuller</button>
-        <button type="button" class="btn-primary" @click="handleSave">Gem</button>
+        <button type="button" class="btn-secondary" @click="resetForm">{{ t('common.cancel') }}</button>
+        <button type="button" class="btn-primary" @click="handleSave">{{ t('common.save') }}</button>
       </div>
     </div>
 
@@ -198,20 +203,20 @@ const handleClose = () => {
     <div v-else>
       <button class="btn-add mb-4" @click="openAddForm">
         <UiIcon name="add" :size="20" />
-        Tilføj fast postering
+        {{ t('fixedEntries.addButton') }}
       </button>
 
       <!-- Empty state -->
       <EmptyState
         v-if="faste.length === 0"
         icon="money-bag-01"
-        title="Ingen faste posteringer"
-        description="Tilføj faste indtægter (løn) og udgifter (husleje, el, etc.) der kommer hver måned"
+        :title="t('fixedEntries.emptyTitle')"
+        :description="t('fixedEntries.emptyDescription')"
       />
 
       <!-- Indtægter -->
       <div v-if="fasteIndtaegter.length > 0" class="mb-6">
-        <h3 class="section-title">Indtægter</h3>
+        <h3 class="section-title">{{ t('fixedEntries.incomeSection') }}</h3>
         <div class="space-y-2">
           <div v-for="entry in fasteIndtaegter" :key="entry.id" class="entry-card">
             <div class="flex-1">
@@ -233,7 +238,7 @@ const handleClose = () => {
 
       <!-- Udgifter -->
       <div v-if="fasteUdgifter.length > 0">
-        <h3 class="section-title">Udgifter</h3>
+        <h3 class="section-title">{{ t('fixedEntries.expenseSection') }}</h3>
         <div class="space-y-2">
           <div v-for="entry in fasteUdgifter" :key="entry.id" class="entry-card">
             <div class="flex-1">
