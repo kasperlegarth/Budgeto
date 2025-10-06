@@ -34,6 +34,7 @@ export interface Category {
   id: string;
   navn: string;
   icon: string;
+  color?: string;
   underkategorier?: Subcategory[];
 }
 

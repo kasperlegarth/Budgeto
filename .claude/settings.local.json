@@ -10,7 +10,12 @@
       "Bash(tree:*)",
       "Bash(npm run build:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm run preview:*)"
+      "Bash(npm run preview:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm pkg get:*)",
+      "Bash(for file in Onboarding.vue SheetAddCategory.vue SheetFixedEntries.vue SheetNewEntry.vue SheetSettings.vue VariableEntriesList.vue)",
+      "Bash(do echo \"Processing $file...\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

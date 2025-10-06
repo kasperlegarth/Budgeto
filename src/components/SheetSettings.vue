@@ -6,21 +6,50 @@
 import { ref } from 'vue';
 import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
-import { resetAllData } from '../utils/storage';
+import SheetAddCategory from './SheetAddCategory.vue';
+import { resetAllData, withLock } from '../utils/storage';
+import { useTheme, type Theme } from '../composables/useTheme';
+import type { Category } from '../types';
 
 interface Props {
   modelValue: boolean;
+  kategorier: Category[];
 }
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void;
   (e: 'reset'): void;
+  (e: 'updated'): void;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const { currentTheme, setTheme } = useTheme();
 const showResetConfirm = ref(false);
+const showAddCategory = ref(false);
+
+// Filtrer seed kategorier (kan ikke slettes)
+const seedCategoryIds = ['mad', 'transport', 'bolig', 'shopping', 'fritid', 'sundhed', 'lon', 'andet'];
+const customKategorier = props.kategorier.filter((k) => !seedCategoryIds.includes(k.id));
+
+const handleDeleteCategory = async (id: string) => {
+  if (seedCategoryIds.includes(id)) {
+    return; // Kan ikke slette seed kategorier
+  }
+
+  await withLock((state) => {
+    state.kategorier = state.kategorier.filter((k) => k.id !== id);
+  });
+
+  emit('updated');
+};
+
+const themeOptions: { value: Theme; label: string; icon: string }[] = [
+  { value: 'light', label: 'Lys', icon: 'sun' },
+  { value: 'dark', label: 'Mørk', icon: 'moon' },
+  { value: 'auto', label: 'Auto', icon: 'settings-02' },
+];
 
 const handleReset = () => {
   resetAllData();
@@ -50,6 +79,63 @@ const handleClose = () => {
         <div class="info-row">
           <span class="info-label">Type</span>
           <span class="info-value">Offline PWA</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Theme section -->
+      <div>
+        <h3 class="section-title">Udseende</h3>
+        <div class="theme-options">
+          <button
+            v-for="option in themeOptions"
+            :key="option.value"
+            :class="['theme-option', currentTheme === option.value && 'theme-option-active']"
+            @click="setTheme(option.value)"
+          >
+            <UiIcon :name="option.icon" :size="20" />
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Kategorier section -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="section-title mb-0">Mine kategorier</h3>
+          <button class="btn-add-small" @click="showAddCategory = true">
+            <UiIcon name="add" :size="16" />
+            Tilføj
+          </button>
+        </div>
+
+        <div v-if="customKategorier.length === 0" class="text-secondary text-center">
+          Du har ikke tilføjet nogen egne kategorier endnu
+        </div>
+
+        <div v-else class="space-y-2">
+          <div
+            v-for="kategori in customKategorier"
+            :key="kategori.id"
+            class="category-item"
+          >
+            <div class="flex items-center gap-3 flex-1">
+              <div class="category-icon">
+                <UiIcon :name="kategori.icon" :size="20" />
+              </div>
+              <span class="category-name">{{ kategori.navn }}</span>
+            </div>
+            <button
+              class="btn-delete-icon"
+              @click="handleDeleteCategory(kategori.id)"
+              aria-label="Slet kategori"
+            >
+              <UiIcon name="close" :size="18" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -96,20 +182,56 @@ const handleClose = () => {
         </p>
       </div>
     </div>
+
+    <!-- Add Category Sheet -->
+    <SheetAddCategory
+      v-model="showAddCategory"
+      @saved="emit('updated')"
+    />
   </BottomSheet>
 </template>
 
 <style scoped>
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  background-color: var(--color-background);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.theme-option-active {
+  border-color: var(--color-primary);
+  background-color: rgba(42, 108, 79, 0.08);
+  color: var(--color-primary);
+}
+
+:global(.dark) .theme-option {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.dark) .theme-option-active {
+  background-color: rgba(61, 153, 112, 0.12);
+}
+
 .info-section {
   background-color: var(--color-background);
   border-radius: 0.75rem;
   overflow: hidden;
-}
-
-@media (prefers-color-scheme: dark) {
-  .info-section {
-    background-color: var(--color-background-dark);
-  }
 }
 
 .info-row {
@@ -124,10 +246,8 @@ const handleClose = () => {
   border-bottom: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .info-row {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
-  }
+:global(.dark) .info-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .info-label {
@@ -140,15 +260,6 @@ const handleClose = () => {
   font-size: 0.9375rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .info-label {
-    color: var(--color-text-dark);
-  }
-  .info-value {
-    color: var(--color-text-secondary-dark);
-  }
-}
-
 .section-title {
   font-size: 0.875rem;
   font-weight: 600;
@@ -158,22 +269,10 @@ const handleClose = () => {
   margin-bottom: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .section-title {
-    color: var(--color-text-secondary-dark);
-  }
-}
-
 .text-secondary {
   color: var(--color-text-secondary);
   font-size: 0.9375rem;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .text-secondary {
-    color: var(--color-text-secondary-dark);
-  }
 }
 
 .text-center {
@@ -185,10 +284,8 @@ const handleClose = () => {
   background-color: rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  .divider {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
+:global(.dark) .divider {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .btn-danger {
@@ -207,24 +304,15 @@ const handleClose = () => {
   transition: opacity 0.15s, transform 0.12s;
 }
 
-.btn-danger:hover {
-  opacity: 0.9;
-}
-
 .btn-danger:active {
   transform: scale(0.98);
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-danger {
-    background-color: var(--color-negative-dark);
-  }
 }
 
 .btn-secondary {
   flex: 1;
   padding: 0.875rem;
   background-color: transparent;
+  color: var(--color-text);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
   font-weight: 600;
@@ -232,17 +320,8 @@ const handleClose = () => {
   transition: background-color 0.15s;
 }
 
-.btn-secondary:hover {
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-secondary {
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  .btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-  }
+:global(.dark) .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .confirm-box {
@@ -262,11 +341,8 @@ const handleClose = () => {
   color: var(--color-negative);
 }
 
-@media (prefers-color-scheme: dark) {
-  .confirm-icon {
-    background-color: rgba(255, 112, 99, 0.15);
-    color: var(--color-negative-dark);
-  }
+:global(.dark) .confirm-icon {
+  background-color: rgba(255, 112, 99, 0.15);
 }
 
 .confirm-title {
@@ -279,12 +355,6 @@ const handleClose = () => {
   color: var(--color-text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .confirm-text {
-    color: var(--color-text-secondary-dark);
-  }
 }
 
 .confirm-actions {
@@ -300,4 +370,54 @@ const handleClose = () => {
   font-size: 0.875rem;
   line-height: 1.6;
 }
+
+.btn-add-small {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-background);
+  border-radius: 0.75rem;
+}
+
+.category-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-name {
+  font-weight: 500;
+}
+
+.btn-delete-icon {
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: all 0.15s;
+}
+
 </style>

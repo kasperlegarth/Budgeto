@@ -55,6 +55,10 @@ const getKategoriIcon = (kategoriId: string) => {
   return props.kategorier.find((k) => k.id === kategoriId)?.icon || 'menu-circle';
 };
 
+const getKategoriColor = (kategoriId: string) => {
+  return props.kategorier.find((k) => k.id === kategoriId)?.color || '#2A6C4F';
+};
+
 const handleDelete = async (id: string) => {
   if (!confirm('Er du sikker på at du vil slette denne postering?')) return;
 
@@ -84,12 +88,13 @@ const handleDelete = async (id: string) => {
         >
           <!-- Icon -->
           <div
-            :class="[
-              'entry-icon',
-              entry.type === 'indtægt' ? 'entry-icon-accent' : 'entry-icon-negative',
-            ]"
+            class="entry-icon"
+            :style="{
+              backgroundColor: getKategoriColor(entry.kategoriId),
+              opacity: entry.type === 'indtægt' ? 1 : 0.9
+            }"
           >
-            <UiIcon :name="getKategoriIcon(entry.kategoriId)" :size="20" />
+            <UiIcon :name="getKategoriIcon(entry.kategoriId)" :size="20" class="text-white" />
           </div>
 
           <!-- Content -->
@@ -143,12 +148,6 @@ const handleDelete = async (id: string) => {
   margin-bottom: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .day-header {
-    color: var(--color-text-secondary-dark);
-  }
-}
-
 .entries {
   display: flex;
   flex-direction: column;
@@ -171,11 +170,8 @@ const handleDelete = async (id: string) => {
   transform: scale(0.98);
 }
 
-@media (prefers-color-scheme: dark) {
-  .entry-card {
-    background-color: var(--color-surface-dark);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
+:global(.dark) .entry-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .entry-icon {
@@ -186,28 +182,6 @@ const handleDelete = async (id: string) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.entry-icon-accent {
-  background-color: rgba(255, 190, 91, 0.12);
-  color: var(--color-accent);
-}
-
-.entry-icon-negative {
-  background-color: rgba(231, 76, 60, 0.12);
-  color: var(--color-negative);
-}
-
-@media (prefers-color-scheme: dark) {
-  .entry-icon-accent {
-    background-color: rgba(255, 211, 126, 0.15);
-    color: var(--color-accent-dark);
-  }
-
-  .entry-icon-negative {
-    background-color: rgba(255, 112, 99, 0.15);
-    color: var(--color-negative-dark);
-  }
 }
 
 .entry-content {
@@ -227,12 +201,6 @@ const handleDelete = async (id: string) => {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .entry-meta {
-    color: var(--color-text-secondary-dark);
-  }
 }
 
 .entry-note {
@@ -261,24 +229,8 @@ const handleDelete = async (id: string) => {
   transition: background-color 0.15s;
 }
 
-.entry-delete:hover {
-  background-color: rgba(231, 76, 60, 0.1);
-  color: var(--color-negative);
-}
-
 .entry-delete:active {
   background-color: rgba(231, 76, 60, 0.15);
-}
-
-@media (prefers-color-scheme: dark) {
-  .entry-delete {
-    color: var(--color-text-secondary-dark);
-  }
-
-  .entry-delete:hover {
-    background-color: rgba(255, 112, 99, 0.15);
-    color: var(--color-negative-dark);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

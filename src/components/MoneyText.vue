@@ -10,7 +10,7 @@ import { formatDKK, type DKK_ore } from '../utils/money';
 interface Props {
   amount: DKK_ore;
   variant?: 'default' | 'accent' | 'negative';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '3xl';
   showSign?: boolean; // Vis + for positive beløb
 }
 
@@ -38,6 +38,8 @@ const sizeClasses = computed(() => {
       return 'text-xl';
     case 'xl':
       return 'text-3xl';
+    case '3xl':
+      return 'text-5xl font-bold';
     default:
       return 'text-base';
   }

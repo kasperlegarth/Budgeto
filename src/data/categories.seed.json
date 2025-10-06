@@ -3,6 +3,7 @@
     "id": "mad",
     "navn": "Mad & Drikke",
     "icon": "restaurant",
+    "color": "#FF6B6B",
     "underkategorier": [
       { "id": "dagligvarer", "navn": "Dagligvarer", "icon": "shopping-cart-02" },
       { "id": "restaurant", "navn": "Restaurant", "icon": "restaurant-02" },
@@ -13,6 +14,7 @@
     "id": "transport",
     "navn": "Transport",
     "icon": "car-01",
+    "color": "#4ECDC4",
     "underkategorier": [
       { "id": "benzin", "navn": "Benzin", "icon": "fuel-01" },
       { "id": "kollektiv", "navn": "Kollektiv trafik", "icon": "bus-01" },
@@ -23,6 +25,7 @@
     "id": "bolig",
     "navn": "Bolig",
     "icon": "home-01",
+    "color": "#95E1D3",
     "underkategorier": [
       { "id": "husleje", "navn": "Husleje", "icon": "home-02" },
       { "id": "el", "navn": "El & Varme", "icon": "lightning-01" },
@@ -33,6 +36,7 @@
     "id": "shopping",
     "navn": "Shopping",
     "icon": "shopping-bag-01",
+    "color": "#FFB84D",
     "underkategorier": [
       { "id": "toj", "navn": "Tøj & Sko", "icon": "shirt-01" },
       { "id": "elektronik", "navn": "Elektronik", "icon": "laptop-01" },
@@ -43,6 +47,7 @@
     "id": "fritid",
     "navn": "Fritid",
     "icon": "football",
+    "color": "#A8E6CF",
     "underkategorier": [
       { "id": "sport", "navn": "Sport & Fitness", "icon": "dumbbell-01" },
       { "id": "streaming", "navn": "Streaming", "icon": "tv-01" },
@@ -53,6 +58,7 @@
     "id": "sundhed",
     "navn": "Sundhed",
     "icon": "hospital-01",
+    "color": "#F7B7D5",
     "underkategorier": [
       { "id": "apotek", "navn": "Apotek", "icon": "medicine-01" },
       { "id": "laege", "navn": "Læge", "icon": "stethoscope" }
@@ -61,11 +67,13 @@
   {
     "id": "lon",
     "navn": "Løn",
-    "icon": "money-bag-01"
+    "icon": "money-bag-01",
+    "color": "#2A6C4F"
   },
   {
     "id": "andet",
     "navn": "Andet",
-    "icon": "menu-circle"
+    "icon": "menu-circle",
+    "color": "#B8B8D1"
   }
 ]

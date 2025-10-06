@@ -262,6 +262,7 @@ const handleClose = () => {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  color: var(--color-text);
 }
 
 .input {
@@ -270,7 +271,8 @@ const handleClose = () => {
   font-size: 1rem;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.15s;
 }
 
@@ -279,14 +281,8 @@ const handleClose = () => {
   border-color: var(--color-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  .input {
-    background-color: var(--color-background-dark);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  .input:focus {
-    border-color: var(--color-primary-dark);
-  }
+:global(.dark) .input {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .type-btn {
@@ -295,9 +291,14 @@ const handleClose = () => {
   border: 2px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
   background: transparent;
+  color: var(--color-text);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+}
+
+:global(.dark) .type-btn {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .type-btn-active.type-btn-negative {
@@ -312,20 +313,13 @@ const handleClose = () => {
   color: #d69c3a;
 }
 
-@media (prefers-color-scheme: dark) {
-  .type-btn {
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  .type-btn-active.type-btn-negative {
-    border-color: var(--color-negative-dark);
-    background-color: rgba(255, 112, 99, 0.12);
-    color: var(--color-negative-dark);
-  }
-  .type-btn-active.type-btn-accent {
-    border-color: var(--color-accent-dark);
-    background-color: rgba(255, 211, 126, 0.12);
-    color: var(--color-accent-dark);
-  }
+:global(.dark) .type-btn-active.type-btn-negative {
+  background-color: rgba(255, 112, 99, 0.12);
+}
+
+:global(.dark) .type-btn-active.type-btn-accent {
+  background-color: rgba(255, 211, 126, 0.12);
+  color: var(--color-accent);
 }
 
 .btn-add {
@@ -344,17 +338,6 @@ const handleClose = () => {
   transition: opacity 0.15s;
 }
 
-.btn-add:hover {
-  opacity: 0.9;
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-add {
-    background-color: rgba(74, 194, 139, 0.15);
-    color: var(--color-primary-dark);
-  }
-}
-
 .btn-primary {
   flex: 1;
   padding: 0.875rem;
@@ -366,26 +349,19 @@ const handleClose = () => {
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn-primary {
-    background-color: var(--color-primary-dark);
-  }
-}
-
 .btn-secondary {
   flex: 1;
   padding: 0.875rem;
   background-color: transparent;
+  color: var(--color-text);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
   font-weight: 600;
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn-secondary {
-    border-color: rgba(255, 255, 255, 0.15);
-  }
+:global(.dark) .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .section-title {
@@ -397,12 +373,6 @@ const handleClose = () => {
   margin-bottom: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .section-title {
-    color: var(--color-text-secondary-dark);
-  }
-}
-
 .entry-card {
   display: flex;
   align-items: center;
@@ -410,12 +380,6 @@ const handleClose = () => {
   padding: 0.875rem 1rem;
   background-color: var(--color-background);
   border-radius: 0.75rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .entry-card {
-    background-color: var(--color-background-dark);
-  }
 }
 
 .entry-title {
@@ -429,12 +393,6 @@ const handleClose = () => {
   margin-bottom: 0.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .entry-note {
-    color: var(--color-text-secondary-dark);
-  }
-}
-
 .icon-btn {
   padding: 0.5rem;
   background: none;
@@ -445,18 +403,6 @@ const handleClose = () => {
   transition: background-color 0.15s;
 }
 
-.icon-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-  .icon-btn {
-    color: var(--color-text-secondary-dark);
-  }
-  .icon-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-}
 
 .error-message {
   padding: 0.75rem;
@@ -466,10 +412,7 @@ const handleClose = () => {
   font-size: 0.875rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .error-message {
-    background-color: rgba(255, 112, 99, 0.15);
-    color: var(--color-negative-dark);
-  }
+:global(.dark) .error-message {
+  background-color: rgba(255, 112, 99, 0.15);
 }
 </style>

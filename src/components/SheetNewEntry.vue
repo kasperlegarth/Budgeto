@@ -4,9 +4,10 @@
  * Type / Beløb / Kategori + Underkategori / Note / Geo
  */
 
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
+import SheetAddCategory from './SheetAddCategory.vue';
 import { parseDKK } from '../utils/money';
 import { withLock } from '../utils/storage';
 import type { EntryType, Category, VariableEntry } from '../types';
@@ -32,6 +33,7 @@ const selectedUnderkategoriId = ref('');
 const note = ref('');
 const isSubmitting = ref(false);
 const error = ref('');
+const showAddCategory = ref(false);
 
 const selectedKategori = computed(() => {
   return props.kategorier.find((k) => k.id === selectedKategoriId.value);
@@ -42,7 +44,9 @@ const underkategorier = computed(() => {
 });
 
 const canSubmit = computed(() => {
-  return beloebInput.value.trim() !== '' && selectedKategoriId.value !== '';
+  const hasAmount = beloebInput.value.trim() !== '';
+  const hasCategory = entryType.value === 'indtægt' || selectedKategoriId.value !== '';
+  return hasAmount && hasCategory;
 });
 
 const reset = () => {
@@ -100,7 +104,7 @@ const handleSubmit = async () => {
     const newEntry: VariableEntry = {
       id: crypto.randomUUID(),
       type: entryType.value,
-      kategoriId: selectedKategoriId.value,
+      kategoriId: entryType.value === 'indtægt' ? 'lon' : selectedKategoriId.value,
       underkategoriId: selectedUnderkategoriId.value || undefined,
       beloeb_ore,
       note: note.value.trim() || undefined,
@@ -133,6 +137,14 @@ const handleClose = () => {
   emit('update:modelValue', false);
   reset();
 };
+
+// Ryd kategori når man skifter til indtægt
+watch(entryType, (newType) => {
+  if (newType === 'indtægt') {
+    selectedKategoriId.value = '';
+    selectedUnderkategoriId.value = '';
+  }
+});
 </script>
 
 <template>
@@ -175,9 +187,19 @@ const handleClose = () => {
         />
       </div>
 
-      <!-- Kategori -->
-      <div>
-        <label for="kategori" class="label">Kategori</label>
+      <!-- Kategori (kun for udgifter) -->
+      <div v-if="entryType === 'udgift'">
+        <div class="flex items-center justify-between mb-2">
+          <label for="kategori" class="label mb-0">Kategori</label>
+          <button
+            type="button"
+            class="btn-add-category"
+            @click="showAddCategory = true"
+          >
+            <UiIcon name="add" :size="16" />
+            Tilføj kategori
+          </button>
+        </div>
         <select id="kategori" v-model="selectedKategoriId" class="input">
           <option value="">Vælg kategori...</option>
           <option v-for="kat in kategorier" :key="kat.id" :value="kat.id">
@@ -187,7 +209,7 @@ const handleClose = () => {
       </div>
 
       <!-- Underkategori (hvis valgt kategori har nogen) -->
-      <div v-if="underkategorier.length > 0">
+      <div v-if="entryType === 'udgift' && underkategorier.length > 0">
         <label for="underkategori" class="label">Underkategori (valgfri)</label>
         <select id="underkategori" v-model="selectedUnderkategoriId" class="input">
           <option value="">Ingen</option>
@@ -223,6 +245,12 @@ const handleClose = () => {
         {{ isSubmitting ? 'Gemmer...' : 'Gem postering' }}
       </button>
     </form>
+
+    <!-- Add Category Sheet -->
+    <SheetAddCategory
+      v-model="showAddCategory"
+      @saved="emit('saved')"
+    />
   </BottomSheet>
 </template>
 
@@ -235,19 +263,13 @@ const handleClose = () => {
   color: var(--color-text);
 }
 
-@media (prefers-color-scheme: dark) {
-  .label {
-    color: var(--color-text-dark);
-  }
-}
-
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.75rem;
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
   color: var(--color-text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -255,19 +277,11 @@ const handleClose = () => {
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(42, 108, 79, 0.1);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
-@media (prefers-color-scheme: dark) {
-  .input {
-    background-color: var(--color-background-dark);
-    color: var(--color-text-dark);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  .input:focus {
-    border-color: var(--color-primary-dark);
-    box-shadow: 0 0 0 3px rgba(74, 194, 139, 0.15);
-  }
+:global(.dark) .input {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .type-btn {
@@ -287,10 +301,6 @@ const handleClose = () => {
   transition: all 0.15s;
 }
 
-.type-btn:hover {
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
 .type-btn-active {
   border-width: 2px;
 }
@@ -307,24 +317,17 @@ const handleClose = () => {
   color: #d69c3a;
 }
 
-@media (prefers-color-scheme: dark) {
-  .type-btn {
-    border-color: rgba(255, 255, 255, 0.15);
-    color: var(--color-text-dark);
-  }
-  .type-btn:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-  }
-  .type-btn-negative.type-btn-active {
-    border-color: var(--color-negative-dark);
-    background-color: rgba(255, 112, 99, 0.12);
-    color: var(--color-negative-dark);
-  }
-  .type-btn-accent.type-btn-active {
-    border-color: var(--color-accent-dark);
-    background-color: rgba(255, 211, 126, 0.12);
-    color: var(--color-accent-dark);
-  }
+:global(.dark) .type-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global(.dark) .type-btn-negative.type-btn-active {
+  background-color: rgba(255, 112, 99, 0.12);
+}
+
+:global(.dark) .type-btn-accent.type-btn-active {
+  background-color: rgba(255, 211, 126, 0.12);
+  color: var(--color-accent);
 }
 
 .btn-primary {
@@ -340,10 +343,6 @@ const handleClose = () => {
   transition: opacity 0.15s, transform 0.12s;
 }
 
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
 .btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
@@ -351,12 +350,6 @@ const handleClose = () => {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-primary {
-    background-color: var(--color-primary-dark);
-  }
 }
 
 .error-message {
@@ -368,10 +361,26 @@ const handleClose = () => {
   font-weight: 500;
 }
 
-@media (prefers-color-scheme: dark) {
-  .error-message {
-    background-color: rgba(255, 112, 99, 0.15);
-    color: var(--color-negative-dark);
-  }
+:global(.dark) .error-message {
+  background-color: rgba(255, 112, 99, 0.15);
+}
+
+.btn-add-category {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-add-category:active {
+  transform: scale(0.97);
 }
 </style>

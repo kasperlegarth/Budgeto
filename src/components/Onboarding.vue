@@ -104,10 +104,8 @@ const handleSkip = () => {
   padding: 2rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .onboarding-overlay {
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #2a7d5a 100%);
-  }
+:global(.dark) .onboarding-overlay {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #2a7d5a 100%);
 }
 
 .onboarding-container {
@@ -211,30 +209,14 @@ const handleSkip = () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
 .btn-primary:active {
   transform: translateY(0);
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-primary {
-    color: var(--color-primary-dark);
-  }
 }
 
 .btn-secondary {
   background-color: transparent;
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 480px) {
@@ -255,11 +237,6 @@ const handleSkip = () => {
 @media (prefers-reduced-motion: reduce) {
   .onboarding-container {
     animation: none;
-  }
-
-  .btn-primary:hover,
-  .btn-secondary:hover {
-    transform: none;
   }
 
   .dot {

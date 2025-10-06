@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { initAppState, shouldShowOnboarding } from './utils/storage';
+import { useTheme } from './composables/useTheme';
 import type { AppState } from './types';
 import MoneyText from './components/MoneyText.vue';
 import UiIcon from './components/UiIcon.vue';
@@ -11,6 +12,9 @@ import SheetFixedEntries from './components/SheetFixedEntries.vue';
 import SheetSettings from './components/SheetSettings.vue';
 import Onboarding from './components/Onboarding.vue';
 import VariableEntriesList from './components/VariableEntriesList.vue';
+
+// Initialize theme
+useTheme();
 
 const state = ref<AppState | null>(null);
 const showNewEntry = ref(false);
@@ -70,73 +74,130 @@ const getBrugtIMåneden = () => {
 const hasVariableEntries = () => {
   return state.value && state.value.variable.length > 0;
 };
+
+// Kategorier med udgifter
+const getKategorierMedUdgifter = () => {
+  if (!state.value) return [];
+
+  // Beregn total udgift for hver kategori
+  const kategoriTotaler = new Map<string, number>();
+
+  // Variable udgifter
+  state.value.variable
+    .filter((e) => e.type === 'udgift')
+    .forEach((e) => {
+      const current = kategoriTotaler.get(e.kategoriId) || 0;
+      kategoriTotaler.set(e.kategoriId, current + e.beloeb_ore);
+    });
+
+  // Faste udgifter
+  state.value.faste
+    .filter((e) => e.type === 'udgift')
+    .forEach((e) => {
+      const current = kategoriTotaler.get(e.kategoriId) || 0;
+      kategoriTotaler.set(e.kategoriId, current + e.beloeb_ore);
+    });
+
+  // Map kategorier med deres totaler
+  return state.value.kategorier
+    .filter((k) => kategoriTotaler.has(k.id))
+    .map((k) => ({
+      kategori: k,
+      total: kategoriTotaler.get(k.id) || 0,
+    }))
+    .sort((a, b) => b.total - a.total); // Sortér efter højeste forbrug
+};
+
+// Hjælpefunktioner til farver
+const getCategoryColor = (index: number) => {
+  const colors = ['#8b5cf6', '#06b6d4', '#10b981', '#f97316'];
+  return colors[index % colors.length];
+};
+
+const getCategoryColorClass = (index: number) => {
+  const classes = ['purple', 'cyan', 'green', 'orange'];
+  return classes[index % classes.length];
+};
 </script>
 
 <template>
-  <div class="min-h-screen pb-24">
+  <div class="app-container">
     <!-- Header -->
-    <header class="surface safe-area-inset-top px-4 py-6 shadow-sm">
-      <h1 class="text-2xl font-semibold text-center">Budgeto</h1>
+    <header class="app-header">
+      <button class="icon-button" @click="showSettings = true">
+        <UiIcon name="menu" :size="24" />
+      </button>
+      <div class="header-actions">
+        <button class="icon-button">
+          <UiIcon name="moon" :size="24" />
+        </button>
+        <button class="icon-button notification-button">
+          <UiIcon name="settings-02" :size="24" />
+          <span class="notification-badge"></span>
+        </button>
+      </div>
     </header>
 
-    <!-- KPI Cards -->
-    <div class="px-4 py-6 space-y-3">
-      <!-- KPI 1: Tilbage i måneden -->
-      <div class="surface rounded-2xl p-5 shadow-md">
-        <div class="text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] mb-1">
-          Tilbage i måneden
-        </div>
-        <MoneyText :amount="getTilbageIMåneden()" size="xl" variant="accent" />
-      </div>
-
-      <!-- KPI 2: Brugt denne måned -->
-      <div class="surface rounded-2xl p-5 shadow-md">
-        <div class="text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] mb-1">
-          Brugt denne måned
-        </div>
-        <MoneyText :amount="getBrugtIMåneden()" size="xl" variant="negative" />
+    <!-- Main Balance -->
+    <div class="main-balance">
+      <div class="balance-label">Main balance</div>
+      <div class="balance-amount">
+        <MoneyText :amount="getTilbageIMåneden()" size="3xl" :show-sign="false" />
       </div>
     </div>
 
-    <!-- Kategorier Section -->
-    <div class="px-4 py-2">
-      <h2 class="text-lg font-semibold mb-3">Kategorier</h2>
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="action-btn">
+        <UiIcon name="add" :size="20" />
+        <span>Add</span>
+      </button>
+      <button class="action-btn">
+        <UiIcon name="shopping-cart-02" :size="20" />
+        <span>Move</span>
+      </button>
+      <button class="action-btn">
+        <UiIcon name="lightning-01" :size="20" />
+        <span>Send</span>
+      </button>
+      <button class="action-btn">
+        <UiIcon name="menu-circle" :size="20" />
+        <span>Details</span>
+      </button>
+    </div>
 
-      <!-- Vis kategorier hvis der er data -->
-      <div v-if="state && state.kategorier.length > 0" class="space-y-2">
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="section-header">
+        <h2>Quick actions</h2>
+        <button class="edit-button">Edit</button>
+      </div>
+
+      <div v-if="getKategorierMedUdgifter().length > 0" class="category-grid">
         <div
-          v-for="kategori in state.kategorier.slice(0, 5)"
-          :key="kategori.id"
-          class="surface rounded-xl p-4 shadow-sm flex items-center gap-3 touch-feedback"
+          v-for="(item, index) in getKategorierMedUdgifter().slice(0, 4)"
+          :key="item.kategori.id"
+          class="category-card touch-feedback"
+          :class="[`category-card-${getCategoryColorClass(index)}`]"
+          :style="{ backgroundColor: item.kategori.color || getCategoryColor(index) }"
         >
-          <div class="w-10 h-10 rounded-full bg-[var(--color-primary-light)] dark:bg-[var(--color-surface-dark)] flex items-center justify-center">
-            <UiIcon
-              :name="kategori.icon"
-              :size="20"
-              class="text-[var(--color-primary)] dark:text-[var(--color-primary-dark)]"
-            />
+          <div class="category-icon">
+            <UiIcon :name="item.kategori.icon" :size="24" />
           </div>
-          <div class="flex-1">
-            <div class="text-base font-medium">{{ kategori.navn }}</div>
-            <div class="text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] mt-0.5">
-              <MoneyText :amount="0" size="sm" />
-            </div>
+          <div class="category-name">{{ item.kategori.navn }}</div>
+          <div class="category-amount">
+            <MoneyText :amount="item.total" size="lg" :show-sign="false" />
           </div>
-          <UiIcon
-            name="chevron-right"
-            :size="20"
-            class="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)]"
-          />
         </div>
       </div>
 
-      <!-- Empty state hvis ingen kategorier -->
-      <EmptyState
-        v-else
-        icon="shopping-bag-01"
-        title="Ingen kategorier"
-        description="Tryk på + for at tilføje din første postering"
-      />
+      <div v-else class="empty-categories">
+        <EmptyState
+          icon="shopping-bag-01"
+          title="Ingen udgifter endnu"
+          description="Tryk på + for at tilføje din første udgift"
+        />
+      </div>
     </div>
 
     <!-- Variable posteringer -->
@@ -181,7 +242,9 @@ const hasVariableEntries = () => {
 
     <SheetSettings
       v-model="showSettings"
+      :kategorier="state?.kategorier || []"
       @reset="refreshState"
+      @updated="refreshState"
     />
 
     <!-- Onboarding -->
@@ -193,8 +256,175 @@ const hasVariableEntries = () => {
 </template>
 
 <style scoped>
+.app-container {
+  min-height: 100vh;
+  padding-bottom: 6rem;
+  background-color: var(--color-background);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1rem 1rem;
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  border: 2px solid var(--color-surface);
+}
+
+.main-balance {
+  padding: 2rem 1rem;
+  text-align: left;
+}
+
+.balance-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.balance-amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  padding: 0 1rem 2rem;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  background-color: var(--color-surface);
+  border: none;
+  border-radius: 1rem;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+
+.quick-actions {
+  padding: 0 1rem 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.edit-button {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.category-card {
+  background-color: var(--color-purple);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 140px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+
+.category-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.95;
+  flex: 1;
+}
+
+.category-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.empty-categories {
+  padding: 2rem 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .touch-feedback {
+  .touch-feedback,
+  .action-btn,
+  .category-card {
     transition: none;
   }
 }

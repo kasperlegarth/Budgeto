@@ -41,19 +41,19 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 };
 
-// Touch handlers for swipe-to-dismiss
-const handleTouchStart = (e: TouchEvent) => {
+// Touch handlers for swipe-to-dismiss (kun på header)
+const handleHeaderTouchStart = (e: TouchEvent) => {
   startY.value = e.touches[0]?.clientY || 0;
   isDragging.value = true;
 };
 
-const handleTouchMove = (e: TouchEvent) => {
+const handleHeaderTouchMove = (e: TouchEvent) => {
   if (!isDragging.value) return;
   currentY.value = (e.touches[0]?.clientY || 0) - startY.value;
   if (currentY.value < 0) currentY.value = 0; // Kun tillad swipe ned
 };
 
-const handleTouchEnd = () => {
+const handleHeaderTouchEnd = () => {
   if (currentY.value > 100) {
     // Swipe threshold: 100px
     close();
@@ -90,17 +90,24 @@ onUnmounted(() => {
           class="sheet-container"
           :style="{ transform: isDragging ? `translateY(${currentY}px)` : '' }"
           @click.stop
-          @touchstart="handleTouchStart"
-          @touchmove="handleTouchMove"
-          @touchend="handleTouchEnd"
         >
           <!-- Handle bar -->
-          <div class="sheet-handle-container">
+          <div
+            class="sheet-handle-container"
+            @touchstart="handleHeaderTouchStart"
+            @touchmove="handleHeaderTouchMove"
+            @touchend="handleHeaderTouchEnd"
+          >
             <div class="sheet-handle"></div>
           </div>
 
           <!-- Header -->
-          <div class="sheet-header">
+          <div
+            class="sheet-header"
+            @touchstart="handleHeaderTouchStart"
+            @touchmove="handleHeaderTouchMove"
+            @touchend="handleHeaderTouchEnd"
+          >
             <h2 class="sheet-title">{{ title }}</h2>
             <button v-if="showClose" class="sheet-close" @click="close" aria-label="Luk">
               <UiIcon name="close" :size="24" />
@@ -140,12 +147,6 @@ onUnmounted(() => {
   transition: transform 0.2s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  .sheet-container {
-    background-color: var(--color-surface-dark);
-  }
-}
-
 .sheet-handle-container {
   padding: 0.75rem 0 0.5rem;
   display: flex;
@@ -173,10 +174,8 @@ onUnmounted(() => {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  .sheet-header {
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
+:global(.dark) .sheet-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .sheet-title {
@@ -199,18 +198,10 @@ onUnmounted(() => {
   transition: background-color 0.15s;
 }
 
-.sheet-close:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+.sheet-close {
+  color: var(--color-text-secondary);
 }
 
-@media (prefers-color-scheme: dark) {
-  .sheet-close {
-    color: var(--color-text-secondary-dark);
-  }
-  .sheet-close:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-}
 
 .sheet-content {
   flex: 1;
