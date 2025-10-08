@@ -33,31 +33,31 @@ const handleAction = (action: 'new' | 'fixed' | 'settings') => {
   <nav class="bottom-nav">
     <button class="nav-btn" @click="handleAction('settings')">
       <div class="nav-icon">
-        <UiIcon name="home-01" :size="24" />
+        <UiIcon name="home-01" :size="20" />
       </div>
     </button>
 
     <button class="nav-btn" @click="handleAction('fixed')">
       <div class="nav-icon">
-        <UiIcon name="money-bag-01" :size="24" />
+        <UiIcon name="money-bag-01" :size="20" />
       </div>
     </button>
 
     <button class="nav-btn nav-btn-add" @click="handleAction('new')">
       <div class="nav-icon-add">
-        <UiIcon name="add" :size="28" />
+        <UiIcon name="add" :size="20" />
       </div>
     </button>
 
     <button class="nav-btn" @click="handleAction('settings')">
       <div class="nav-icon">
-        <UiIcon name="shopping-cart-02" :size="24" />
+        <UiIcon name="shopping-cart-02" :size="20" />
       </div>
     </button>
 
     <button class="nav-btn" @click="handleAction('settings')">
       <div class="nav-icon">
-        <UiIcon name="settings-02" :size="24" />
+        <UiIcon name="settings-02" :size="20" />
       </div>
     </button>
   </nav>
@@ -66,24 +66,24 @@ const handleAction = (action: 'new' | 'fixed' | 'settings') => {
 <style scoped>
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background-color: var(--color-surface);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  height: 50px;
+  background-color: #1a1a1a;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 1rem;
-  padding-bottom: max(0px, env(safe-area-inset-bottom));
+  padding: 0 0.25rem;
+  gap: 0.25rem;
   z-index: 100;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 :global(.dark) .bottom-nav {
-  border-top-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  background-color: #1a1a1a;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 .nav-btn {
@@ -102,33 +102,32 @@ const handleAction = (action: 'new' | 'fixed' | 'settings') => {
 }
 
 .nav-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 32px;
   border-radius: 50%;
-  background-color: var(--color-background);
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text);
+  color: #ffffff;
   transition: all 0.2s;
 }
 
 
 .nav-btn-add {
   position: relative;
-  margin-top: -20px;
 }
 
 .nav-icon-add {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #6d28d9 100%);
+  width: 64px;
+  height: 32px;
+  border-radius: 1.5rem;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.2s;
 }
 

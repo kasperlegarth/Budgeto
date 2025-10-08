@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "dev:mock": "cross-env VITE_DEV_MODE=true vite --host",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
@@ -22,6 +23,7 @@
     "@vitest/ui": "^3.2.4",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^10.1.0",
     "eslint": "^9.37.0",
     "jsdom": "^27.0.0",
     "postcss": "^8.4.49",

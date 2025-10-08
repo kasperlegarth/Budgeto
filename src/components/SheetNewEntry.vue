@@ -9,9 +9,10 @@ import { useI18n } from 'vue-i18n';
 import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
 import SheetAddCategory from './SheetAddCategory.vue';
-import { parseDKK } from '../utils/money';
+import { parseMoney } from '../utils/money';
 import { withLock } from '../utils/storage';
 import { getCategoryName } from '../utils/category';
+import { useCurrency } from '../composables/useCurrency';
 import type { EntryType, Category, VariableEntry } from '../types';
 
 interface Props {
@@ -27,6 +28,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const { t } = useI18n();
+const { currentCurrency } = useCurrency();
 
 // Form state
 const entryType = ref<EntryType>('udgift');
@@ -92,9 +94,9 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    // Parse beløb
-    const beloeb_ore = parseDKK(beloebInput.value);
-    if (beloeb_ore === null || beloeb_ore <= 0) {
+    // Parse beløb med nuværende valuta
+    const beloeb = parseMoney(beloebInput.value, currentCurrency.value);
+    if (beloeb === null || beloeb.amount <= 0) {
       error.value = t('newEntry.errorInvalidAmount');
       isSubmitting.value = false;
       return;
@@ -109,7 +111,8 @@ const handleSubmit = async () => {
       type: entryType.value,
       kategoriId: entryType.value === 'indtægt' ? 'lon' : selectedKategoriId.value,
       underkategoriId: selectedUnderkategoriId.value || undefined,
-      beloeb_ore,
+      beloeb_ore: beloeb.amount, // Legacy field (backward compatibility)
+      beloeb, // Nyt Money felt
       note: note.value.trim() || undefined,
       timestamp: Date.now(),
       geo,

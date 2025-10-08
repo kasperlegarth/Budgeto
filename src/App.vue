@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { initAppState, shouldShowOnboarding } from './utils/storage';
+import { initAppState, shouldShowOnboarding, isDevMode } from './utils/storage';
 import { useTheme } from './composables/useTheme';
 import { getCategoryName } from './utils/category';
 import type { AppState } from './types';
@@ -25,10 +25,12 @@ const showNewEntry = ref(false);
 const showFixedEntries = ref(false);
 const showSettings = ref(false);
 const showOnboarding = ref(false);
+const devMode = ref(false);
 
 onMounted(() => {
   showOnboarding.value = shouldShowOnboarding();
   state.value = initAppState();
+  devMode.value = isDevMode();
 });
 
 const refreshState = () => {
@@ -40,29 +42,29 @@ const handleOnboardingComplete = () => {
   refreshState();
 };
 
-// KPI beregninger
+// KPI beregninger - bruger Money objekt eller fallback til beloeb_ore
 const getTilbageIMåneden = () => {
   if (!state.value) return 0;
 
   // Sum faste indtægter
   const fasteIndtaegter = state.value.faste
     .filter((e) => e.type === 'indtægt')
-    .reduce((sum, e) => sum + e.beloeb_ore, 0);
+    .reduce((sum, e) => sum + (e.beloeb?.amount ?? e.beloeb_ore), 0);
 
   // Sum faste udgifter
   const fasteUdgifter = state.value.faste
     .filter((e) => e.type === 'udgift')
-    .reduce((sum, e) => sum + e.beloeb_ore, 0);
+    .reduce((sum, e) => sum + (e.beloeb?.amount ?? e.beloeb_ore), 0);
 
   // Sum variable udgifter
   const variableUdgifter = state.value.variable
     .filter((e) => e.type === 'udgift')
-    .reduce((sum, e) => sum + e.beloeb_ore, 0);
+    .reduce((sum, e) => sum + (e.beloeb?.amount ?? e.beloeb_ore), 0);
 
   // Sum variable indtægter
   const variableIndtaegter = state.value.variable
     .filter((e) => e.type === 'indtægt')
-    .reduce((sum, e) => sum + e.beloeb_ore, 0);
+    .reduce((sum, e) => sum + (e.beloeb?.amount ?? e.beloeb_ore), 0);
 
   return fasteIndtaegter - fasteUdgifter - variableUdgifter + variableIndtaegter;
 };
@@ -92,7 +94,7 @@ const getKategorierMedUdgifter = () => {
     .filter((e) => e.type === 'udgift')
     .forEach((e) => {
       const current = kategoriTotaler.get(e.kategoriId) || 0;
-      kategoriTotaler.set(e.kategoriId, current + e.beloeb_ore);
+      kategoriTotaler.set(e.kategoriId, current + (e.beloeb?.amount ?? e.beloeb_ore));
     });
 
   // Faste udgifter
@@ -100,7 +102,7 @@ const getKategorierMedUdgifter = () => {
     .filter((e) => e.type === 'udgift')
     .forEach((e) => {
       const current = kategoriTotaler.get(e.kategoriId) || 0;
-      kategoriTotaler.set(e.kategoriId, current + e.beloeb_ore);
+      kategoriTotaler.set(e.kategoriId, current + (e.beloeb?.amount ?? e.beloeb_ore));
     });
 
   // Map kategorier med deres totaler
@@ -127,21 +129,11 @@ const getCategoryColorClass = (index: number) => {
 
 <template>
   <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <button class="icon-button" @click="showSettings = true">
-        <UiIcon name="menu" :size="24" />
-      </button>
-      <div class="header-actions">
-        <button class="icon-button">
-          <UiIcon name="moon" :size="24" />
-        </button>
-        <button class="icon-button notification-button">
-          <UiIcon name="settings-02" :size="24" />
-          <span class="notification-badge"></span>
-        </button>
-      </div>
-    </header>
+    <!-- Dev Mode Badge -->
+    <div v-if="devMode" class="dev-mode-badge">
+      <UiIcon name="code-circle" :size="16" />
+      <span>Dev Mode</span>
+    </div>
 
     <!-- Main Balance -->
     <div class="main-balance">
@@ -180,7 +172,7 @@ const getCategoryColorClass = (index: number) => {
 
       <div v-if="getKategorierMedUdgifter().length > 0" class="category-grid">
         <div
-          v-for="(item, index) in getKategorierMedUdgifter().slice(0, 4)"
+          v-for="(item, index) in getKategorierMedUdgifter()"
           :key="item.kategori.id"
           class="category-card touch-feedback"
           :class="[`category-card-${getCategoryColorClass(index)}`]"
@@ -191,7 +183,7 @@ const getCategoryColorClass = (index: number) => {
           </div>
           <div class="category-name">{{ getCategoryName(item.kategori, t) }}</div>
           <div class="category-amount">
-            <MoneyText :amount="item.total" size="lg" :show-sign="false" />
+            <MoneyText :amount="item.total" size="lg" :show-sign="false" variant="white" />
           </div>
         </div>
       </div>
@@ -263,55 +255,32 @@ const getCategoryColorClass = (index: number) => {
 <style scoped>
 .app-container {
   min-height: 100vh;
-  padding-bottom: 6rem;
+  padding-bottom: 7rem;
   background-color: var(--color-background);
 }
 
-.app-header {
+.dev-mode-badge {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 1rem 1rem;
-  padding-top: max(1.5rem, env(safe-area-inset-top));
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.icon-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-
-.notification-button {
-  position: relative;
-}
-
-.notification-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #ef4444;
-  border: 2px solid var(--color-surface);
+  gap: 0.375rem;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  letter-spacing: 0.025em;
 }
 
 .main-balance {
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 2rem;
+  padding-top: max(2rem, env(safe-area-inset-top));
   text-align: left;
 }
 

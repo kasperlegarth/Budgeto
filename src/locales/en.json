@@ -59,6 +59,18 @@
       "title": "Welcome to Budgeto",
       "description": "Keep track of your finances the easy way. Everything is stored locally on your device."
     },
+    "theme": {
+      "title": "Choose your theme",
+      "description": "Customize the appearance to your preference"
+    },
+    "language": {
+      "title": "Choose your language",
+      "description": "Select the language you prefer"
+    },
+    "currency": {
+      "title": "Choose your currency",
+      "description": "Select the currency you'll use for your entries"
+    },
     "step2": {
       "title": "Add your expenses",
       "description": "Track variable expenses like food, transport and shopping throughout the month."
@@ -118,6 +130,11 @@
     "type": "Type",
     "typeValue": "Offline PWA",
     "appearanceSection": "Appearance",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto"
+    },
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeAuto": "Auto",
@@ -125,6 +142,8 @@
     "languageDanish": "Dansk",
     "languageEnglish": "English",
     "languageAuto": "Auto",
+    "currencySection": "Currency",
+    "currencyDescription": "Select default currency for your entries",
     "categoriesSection": "My categories",
     "noCategoriesYet": "You haven't added any custom categories yet",
     "dangerZone": "Danger zone",
@@ -134,6 +153,14 @@
     "resetConfirmText": "This will delete ALL your entries, fixed income/expenses and data. This action cannot be undone.",
     "resetConfirmButton": "Yes, reset everything",
     "deleteCategory": "Delete category"
+  },
+  "currencies": {
+    "DKK": "Danish Krone",
+    "EUR": "Euro",
+    "USD": "US Dollar",
+    "GBP": "British Pound",
+    "SEK": "Swedish Krona",
+    "NOK": "Norwegian Krone"
   },
   "quickActions": {
     "title": "Quick actions",

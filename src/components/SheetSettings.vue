@@ -12,7 +12,8 @@ import { useTheme, type Theme } from '../composables/useTheme';
 import { useI18n } from 'vue-i18n';
 import { getCategoryName } from '../utils/category';
 import { useLocale, type Locale } from '../composables/useLocale';
-import type { Category } from '../types';
+import { useCurrency } from '../composables/useCurrency';
+import type { Category, Currency } from '../types';
 
 interface Props {
   modelValue: boolean;
@@ -31,6 +32,7 @@ const emit = defineEmits<Emits>();
 const { currentTheme, setTheme } = useTheme();
 const { t } = useI18n();
 const { currentLocale, setLocale } = useLocale();
+const { currentCurrency, setCurrency, supportedCurrencies } = useCurrency();
 const showResetConfirm = ref(false);
 const showAddCategory = ref(false);
 
@@ -61,6 +63,11 @@ const localeOptions: { value: Locale; label: string; icon: string }[] = [
   { value: 'en', label: t('settings.languageEnglish'), icon: 'flag-02' },
   { value: 'auto', label: t('settings.languageAuto'), icon: 'settings-02' },
 ];
+
+const handleCurrencyChange = (currency: Currency) => {
+  setCurrency(currency);
+  emit('updated');
+};
 
 const handleReset = () => {
   resetAllData();
@@ -123,6 +130,25 @@ const handleClose = () => {
           >
             <UiIcon :name="option.icon" :size="20" />
             <span>{{ option.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Currency section -->
+      <div>
+        <h3 class="section-title">{{ t('settings.currencySection') }}</h3>
+        <p class="text-secondary mb-3">
+          {{ t('settings.currencyDescription') }}
+        </p>
+        <div class="currency-grid">
+          <button
+            v-for="currency in supportedCurrencies"
+            :key="currency.code"
+            :class="['currency-option', currentCurrency === currency.code && 'currency-option-active']"
+            @click="handleCurrencyChange(currency.code)"
+          >
+            <span class="currency-symbol">{{ currency.symbol }}</span>
+            <span class="currency-code">{{ currency.code }}</span>
           </button>
         </div>
       </div>
@@ -445,6 +471,54 @@ const handleClose = () => {
   cursor: pointer;
   border-radius: 0.375rem;
   transition: all 0.15s;
+}
+
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.currency-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem 0.75rem;
+  background-color: var(--color-background);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--color-text);
+}
+
+.currency-option-active {
+  border-color: var(--color-primary);
+  background-color: rgba(42, 108, 79, 0.08);
+}
+
+:global(.dark) .currency-option {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.dark) .currency-option-active {
+  background-color: rgba(61, 153, 112, 0.12);
+}
+
+.currency-symbol {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.currency-code {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.currency-option-active .currency-code {
+  color: var(--color-primary);
 }
 
 </style>

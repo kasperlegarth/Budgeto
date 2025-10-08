@@ -15,7 +15,9 @@
       "Bash(npm pkg get:*)",
       "Bash(for file in Onboarding.vue SheetAddCategory.vue SheetFixedEntries.vue SheetNewEntry.vue SheetSettings.vue VariableEntriesList.vue)",
       "Bash(do echo \"Processing $file...\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(npm run dev:mock:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

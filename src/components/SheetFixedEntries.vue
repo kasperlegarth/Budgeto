@@ -10,9 +10,10 @@ import BottomSheet from './BottomSheet.vue';
 import UiIcon from './UiIcon.vue';
 import MoneyText from './MoneyText.vue';
 import EmptyState from './EmptyState.vue';
-import { parseDKK } from '../utils/money';
+import { parseMoney, toMajorUnits } from '../utils/money';
 import { withLock } from '../utils/storage';
 import { getCategoryName } from '../utils/category';
+import { useCurrency } from '../composables/useCurrency';
 import type { EntryType, Category, FixedEntry } from '../types';
 
 interface Props {
@@ -30,6 +31,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { t } = useI18n();
+const { currentCurrency } = useCurrency();
 
 const showForm = ref(false);
 const editingId = ref<string | null>(null);
@@ -69,7 +71,12 @@ const openAddForm = () => {
 const openEditForm = (entry: FixedEntry) => {
   editingId.value = entry.id;
   formType.value = entry.type;
-  formBeloeb.value = (entry.beloeb_ore / 100).toString().replace('.', ',');
+
+  // Brug beloeb hvis det findes, ellers fallback til beloeb_ore
+  const money = entry.beloeb || { amount: entry.beloeb_ore, currency: 'DKK' };
+  const majorUnits = toMajorUnits(money.amount, money.currency);
+  formBeloeb.value = majorUnits.toString().replace('.', ',');
+
   formKategoriId.value = entry.kategoriId;
   formUnderkategoriId.value = entry.underkategoriId || '';
   formNote.value = entry.note || '';
@@ -80,8 +87,8 @@ const openEditForm = (entry: FixedEntry) => {
 const handleSave = async () => {
   formError.value = '';
 
-  const beloeb_ore = parseDKK(formBeloeb.value);
-  if (beloeb_ore === null || beloeb_ore <= 0) {
+  const beloeb = parseMoney(formBeloeb.value, currentCurrency.value);
+  if (beloeb === null || beloeb.amount <= 0) {
     formError.value = t('fixedEntries.errorInvalidAmount');
     return;
   }
@@ -102,7 +109,8 @@ const handleSave = async () => {
             type: formType.value,
             kategoriId: formKategoriId.value,
             underkategoriId: formUnderkategoriId.value || undefined,
-            beloeb_ore,
+            beloeb_ore: beloeb.amount, // Legacy field
+            beloeb, // Nyt Money felt
             note: formNote.value.trim() || undefined,
           };
         }
@@ -113,7 +121,8 @@ const handleSave = async () => {
           type: formType.value,
           kategoriId: formKategoriId.value,
           underkategoriId: formUnderkategoriId.value || undefined,
-          beloeb_ore,
+          beloeb_ore: beloeb.amount, // Legacy field
+          beloeb, // Nyt Money felt
           note: formNote.value.trim() || undefined,
         });
       }

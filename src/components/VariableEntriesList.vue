@@ -149,7 +149,7 @@ const handleDelete = async (id: string) => {
   font-weight: 600;
   text-transform: capitalize;
   color: var(--color-text-secondary);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0;
   margin-bottom: 0.5rem;
 }
 
@@ -157,7 +157,6 @@ const handleDelete = async (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0 1rem;
 }
 
 .entry-card {

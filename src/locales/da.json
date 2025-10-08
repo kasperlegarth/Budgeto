@@ -59,6 +59,18 @@
       "title": "Velkommen til Budgeto",
       "description": "Hold styr på din økonomi på den nemme måde. Alt gemmes lokalt på din enhed."
     },
+    "theme": {
+      "title": "Vælg dit tema",
+      "description": "Tilpas udseendet efter dine præferencer"
+    },
+    "language": {
+      "title": "Vælg dit sprog",
+      "description": "Vælg det sprog du foretrækker"
+    },
+    "currency": {
+      "title": "Vælg din valuta",
+      "description": "Vælg den valuta du vil bruge til dine posteringer"
+    },
     "step2": {
       "title": "Tilføj dine udgifter",
       "description": "Registrer variable udgifter som mad, transport og shopping løbende gennem måneden."
@@ -132,6 +144,11 @@
     "type": "Type",
     "typeValue": "Offline PWA",
     "appearanceSection": "Udseende",
+    "theme": {
+      "light": "Lys",
+      "dark": "Mørk",
+      "auto": "Auto"
+    },
     "themeLight": "Lys",
     "themeDark": "Mørk",
     "themeAuto": "Auto",
@@ -139,6 +156,8 @@
     "languageDanish": "Dansk",
     "languageEnglish": "English",
     "languageAuto": "Auto",
+    "currencySection": "Valuta",
+    "currencyDescription": "Vælg standard valuta for dine posteringer",
     "categoriesSection": "Mine kategorier",
     "noCategoriesYet": "Du har ikke tilføjet nogen egne kategorier endnu",
     "dangerZone": "Farligt område",
@@ -148,6 +167,14 @@
     "resetConfirmText": "Dette vil slette ALLE dine posteringer, faste indtægter/udgifter og data. Handlingen kan ikke fortrydes.",
     "resetConfirmButton": "Ja, nulstil alt",
     "deleteCategory": "Slet kategori"
+  },
+  "currencies": {
+    "DKK": "Danske kroner",
+    "EUR": "Euro",
+    "USD": "US Dollar",
+    "GBP": "Britiske pund",
+    "SEK": "Svenske kroner",
+    "NOK": "Norske kroner"
   },
   "quickActions": {
     "title": "Hurtige handlinger",

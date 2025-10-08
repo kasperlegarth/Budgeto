@@ -1,69 +1,185 @@
 /**
  * Money utilities for Budgeto
- * All amounts are stored as integers in øre (1 kr = 100 øre)
+ * All amounts are stored as integers in minor units (øre, cents, etc.)
  */
 
-import type { DKK_ore } from '../types';
+import type { Currency, Money, DKK_ore } from '../types';
 
-export type { DKK_ore };
+export type { DKK_ore, Money, Currency };
 
 /**
- * Konverterer kroner (med decimaler) til øre (heltal)
- * @param kroner - Beløb i kroner (fx 123.45)
- * @returns Beløb i øre (fx 12345)
+ * Currency info for formatting and conversion
+ */
+export interface CurrencyInfo {
+  code: Currency;
+  symbol: string;
+  name: string;
+  minorUnits: number; // Antal decimaler (2 for de fleste, 0 for JPY, osv.)
+  symbolPosition: 'before' | 'after';
+  decimalSeparator: string;
+  thousandSeparator: string;
+}
+
+/**
+ * Currency information database
+ */
+const CURRENCY_INFO: Record<Currency, CurrencyInfo> = {
+  DKK: {
+    code: 'DKK',
+    symbol: 'kr',
+    name: 'Danske kroner',
+    minorUnits: 2,
+    symbolPosition: 'after',
+    decimalSeparator: ',',
+    thousandSeparator: '.',
+  },
+  EUR: {
+    code: 'EUR',
+    symbol: '€',
+    name: 'Euro',
+    minorUnits: 2,
+    symbolPosition: 'before',
+    decimalSeparator: ',',
+    thousandSeparator: '.',
+  },
+  USD: {
+    code: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
+    minorUnits: 2,
+    symbolPosition: 'before',
+    decimalSeparator: '.',
+    thousandSeparator: ',',
+  },
+  GBP: {
+    code: 'GBP',
+    symbol: '£',
+    name: 'Britiske pund',
+    minorUnits: 2,
+    symbolPosition: 'before',
+    decimalSeparator: '.',
+    thousandSeparator: ',',
+  },
+  SEK: {
+    code: 'SEK',
+    symbol: 'kr',
+    name: 'Svenske kroner',
+    minorUnits: 2,
+    symbolPosition: 'after',
+    decimalSeparator: ',',
+    thousandSeparator: ' ',
+  },
+  NOK: {
+    code: 'NOK',
+    symbol: 'kr',
+    name: 'Norske kroner',
+    minorUnits: 2,
+    symbolPosition: 'after',
+    decimalSeparator: ',',
+    thousandSeparator: ' ',
+  },
+};
+
+/**
+ * Fixed exchange rates (DKK som base)
+ * Disse er hardcoded indtil live rates implementeres senere
+ */
+const FIXED_EXCHANGE_RATES: Record<Currency, number> = {
+  DKK: 1,
+  EUR: 0.134, // 1 DKK = 0.134 EUR (ca. 7.46 DKK per EUR)
+  USD: 0.145, // 1 DKK = 0.145 USD (ca. 6.90 DKK per USD)
+  GBP: 0.115, // 1 DKK = 0.115 GBP (ca. 8.70 DKK per GBP)
+  SEK: 1.52, // 1 DKK = 1.52 SEK (ca. 0.66 DKK per SEK)
+  NOK: 1.55, // 1 DKK = 1.55 NOK (ca. 0.65 DKK per NOK)
+};
+
+/**
+ * Henter currency info
+ */
+export function getCurrencyInfo(currency: Currency): CurrencyInfo {
+  return CURRENCY_INFO[currency];
+}
+
+/**
+ * Konverterer major units (kroner, euros, etc.) til minor units (øre, cents, etc.)
+ */
+export function toMinorUnits(amount: number, currency: Currency): number {
+  const info = getCurrencyInfo(currency);
+  return Math.round(amount * Math.pow(10, info.minorUnits));
+}
+
+/**
+ * Konverterer minor units (øre, cents, etc.) til major units (kroner, euros, etc.)
+ */
+export function toMajorUnits(amount: number, currency: Currency): number {
+  const info = getCurrencyInfo(currency);
+  return amount / Math.pow(10, info.minorUnits);
+}
+
+/**
+ * Legacy: Konverterer kroner til øre (bevar for backward compatibility)
  */
 export function kronerTilOre(kroner: number): DKK_ore {
-  return Math.round(kroner * 100);
+  return toMinorUnits(kroner, 'DKK');
 }
 
 /**
- * Konverterer øre (heltal) til kroner (med decimaler)
- * @param ore - Beløb i øre (fx 12345)
- * @returns Beløb i kroner (fx 123.45)
+ * Legacy: Konverterer øre til kroner (bevar for backward compatibility)
  */
 export function oreTilKroner(ore: DKK_ore): number {
-  return ore / 100;
+  return toMajorUnits(ore, 'DKK');
 }
 
 /**
- * Formaterer beløb i øre til DKK-format med tusind-separatorer
- * @param ore - Beløb i øre
- * @param includeCurrency - Om currency symbol skal inkluderes (default: true)
- * @param locale - Locale for formatering ('da' eller 'en', default: 'da')
- * @returns Formateret string (fx "12.345,67 kr" (da) eller "DKK 12,345.67" (en))
+ * Formaterer Money objekt til læsbar string
+ */
+export function formatMoney(
+  money: Money,
+  includeCurrency = true,
+  locale: 'da' | 'en' = 'da'
+): string {
+  const info = getCurrencyInfo(money.currency);
+  const majorUnits = toMajorUnits(money.amount, money.currency);
+
+  const localeString = locale === 'da' ? 'da-DK' : 'en-US';
+  const formatted = new Intl.NumberFormat(localeString, {
+    minimumFractionDigits: info.minorUnits,
+    maximumFractionDigits: info.minorUnits,
+  }).format(majorUnits);
+
+  if (!includeCurrency) return formatted;
+
+  // Tilpas format baseret på currency og locale
+  if (money.currency === 'DKK' || money.currency === 'SEK' || money.currency === 'NOK') {
+    return `${formatted} ${info.symbol}`;
+  } else {
+    // EUR, USD, GBP vises som symbol før beløb
+    return `${info.symbol}${formatted}`;
+  }
+}
+
+/**
+ * Legacy: Formaterer DKK_ore til DKK-format (bevar for backward compatibility)
  */
 export function formatDKK(
   ore: DKK_ore,
   includeCurrency = true,
   locale: 'da' | 'en' = 'da'
 ): string {
-  const kroner = oreTilKroner(ore);
-
-  const localeString = locale === 'da' ? 'da-DK' : 'en-US';
-  const formatted = new Intl.NumberFormat(localeString, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(kroner);
-
-  if (!includeCurrency) return formatted;
-
-  // Dansk: "123,45 kr"
-  // Engelsk: "DKK 123.45"
-  return locale === 'da' ? `${formatted} kr` : `DKK ${formatted}`;
+  return formatMoney({ amount: ore, currency: 'DKK' }, includeCurrency, locale);
 }
 
 /**
- * Parser dansk DKK-input til øre
- * Accepterer formater som: "1234,56", "1.234,56", "1234.56" osv.
- * @param input - String med beløb
- * @returns Beløb i øre eller null ved fejl
+ * Parser input string til Money objekt
  */
-export function parseDKK(input: string): DKK_ore | null {
+export function parseMoney(input: string, currency: Currency): Money | null {
   if (!input || input.trim() === '') return null;
 
-  // Fjern "kr", whitespace og andre ikke-numeriske tegn (bortset fra , . -)
+  const info = getCurrencyInfo(currency);
+
+  // Fjern currency symbol, whitespace og andre ikke-numeriske tegn
   let cleaned = input
-    .replace(/kr\.?/gi, '')
+    .replace(new RegExp(info.symbol, 'gi'), '')
     .replace(/\s/g, '')
     .trim();
 
@@ -73,12 +189,11 @@ export function parseDKK(input: string): DKK_ore | null {
     cleaned = cleaned.substring(1);
   }
 
-  // Håndter dansk format: sidste komma/punktum er decimal separator
-  // Find sidste komma eller punktum
+  // Find sidste komma eller punktum (decimal separator)
   const lastCommaIdx = cleaned.lastIndexOf(',');
   const lastDotIdx = cleaned.lastIndexOf('.');
 
-  let decimalPart = '00';
+  let decimalPart = '0'.repeat(info.minorUnits);
   let integerPart = cleaned;
 
   if (lastCommaIdx > lastDotIdx && lastCommaIdx !== -1) {
@@ -94,17 +209,86 @@ export function parseDKK(input: string): DKK_ore | null {
     integerPart = cleaned.replace(/[.,]/g, '');
   }
 
-  // Sørg for at decimal har præcis 2 cifre
-  if (decimalPart.length === 1) {
+  // Pad eller trim decimal part til korrekt antal cifre
+  while (decimalPart.length < info.minorUnits) {
     decimalPart += '0';
-  } else if (decimalPart.length > 2) {
-    decimalPart = decimalPart.substring(0, 2);
+  }
+  if (decimalPart.length > info.minorUnits) {
+    decimalPart = decimalPart.substring(0, info.minorUnits);
   }
 
   const numberStr = integerPart + decimalPart;
-  const ore = parseInt(numberStr, 10);
+  const amount = parseInt(numberStr, 10);
 
-  if (isNaN(ore)) return null;
+  if (isNaN(amount)) return null;
 
-  return isNegative ? -ore : ore;
+  return {
+    amount: isNegative ? -amount : amount,
+    currency,
+  };
+}
+
+/**
+ * Legacy: Parser DKK input til øre (bevar for backward compatibility)
+ */
+export function parseDKK(input: string): DKK_ore | null {
+  const money = parseMoney(input, 'DKK');
+  return money ? money.amount : null;
+}
+
+/**
+ * Konverterer beløb fra en valuta til en anden
+ * Bruger fixed exchange rates indtil live rates implementeres
+ */
+export function convertCurrency(
+  money: Money,
+  targetCurrency: Currency
+): Money {
+  if (money.currency === targetCurrency) {
+    return money;
+  }
+
+  // Konverter til DKK først, derefter til target currency
+  const rateFromSource = FIXED_EXCHANGE_RATES[money.currency];
+  const rateToTarget = FIXED_EXCHANGE_RATES[targetCurrency];
+
+  const amountInDKK = money.amount / rateFromSource;
+  const amountInTarget = amountInDKK * rateToTarget;
+
+  return {
+    amount: Math.round(amountInTarget),
+    currency: targetCurrency,
+  };
+}
+
+/**
+ * Helper: Konverterer legacy DKK_ore til Money objekt
+ */
+export function dkkOreToMoney(ore: DKK_ore): Money {
+  return {
+    amount: ore,
+    currency: 'DKK',
+  };
+}
+
+/**
+ * Helper: Konverterer Money objekt til DKK_ore (kun hvis currency er DKK)
+ */
+export function moneyToDkkOre(money: Money): DKK_ore {
+  if (money.currency !== 'DKK') {
+    throw new Error('Kan kun konvertere DKK Money til DKK_ore');
+  }
+  return money.amount;
+}
+
+/**
+ * Henter exchange rate mellem to valutaer
+ */
+export function getExchangeRate(from: Currency, to: Currency): number {
+  if (from === to) return 1;
+
+  const rateFrom = FIXED_EXCHANGE_RATES[from];
+  const rateTo = FIXED_EXCHANGE_RATES[to];
+
+  return rateTo / rateFrom;
 }

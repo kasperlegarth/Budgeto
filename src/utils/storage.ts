@@ -6,6 +6,8 @@
 import type { AppState, Category } from '../types';
 import categoriesSeed from '../data/categories.seed.json';
 import { shouldResetVariable, firstDayOfMonth, nowInCopenhagen } from './date';
+import { dkkOreToMoney } from './money';
+import { generateMockData } from './mockData';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -13,9 +15,10 @@ const STORAGE_KEYS = {
   SEED_APPLIED: 'budgeto.seed.applied',
   LAST_OPENED_ISO: 'budgeto.lastOpenedISO',
   LOCK: 'budgeto.lock',
+  DEV_MODE: 'budgeto.devMode',
 } as const;
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 /**
  * Henter app state fra localStorage
@@ -46,17 +49,88 @@ export function saveAppState(state: AppState): void {
 }
 
 /**
+ * Tjekker om dev mode er aktiveret
+ * Prioriterer environment variable, derefter localStorage
+ * @returns true hvis dev mode er aktiv
+ */
+export function isDevMode(): boolean {
+  // Tjek environment variable først (sæt via npm script)
+  if (import.meta.env.VITE_DEV_MODE === 'true') {
+    return true;
+  }
+
+  // Fallback til localStorage (manuel aktivering)
+  return localStorage.getItem(STORAGE_KEYS.DEV_MODE) === 'true';
+}
+
+/**
  * Opretter initial app state med seed data
  * @returns Ny AppState
  */
 function createInitialState(): AppState {
+  const devMode = isDevMode();
+
+  if (devMode) {
+    console.log('Dev Mode: Genererer mock data');
+    const mockData = generateMockData();
+    return {
+      version: CURRENT_VERSION,
+      faste: mockData.faste,
+      variable: mockData.variable,
+      kategorier: categoriesSeed as Category[],
+      sidsteResetISO: firstDayOfMonth(),
+      defaultCurrency: 'DKK',
+    };
+  }
+
   return {
     version: CURRENT_VERSION,
     faste: [],
     variable: [],
     kategorier: categoriesSeed as Category[],
     sidsteResetISO: firstDayOfMonth(),
+    defaultCurrency: 'DKK',
   };
+}
+
+/**
+ * Migrerer fra version 1 til version 2
+ * Konverterer beloeb_ore til beloeb (Money objekt) og tilføjer defaultCurrency
+ */
+function migrateV1ToV2(state: AppState): void {
+  console.log('Migration: Starter V1 → V2 migration');
+
+  // Sæt default currency hvis mangler
+  if (!state.defaultCurrency) {
+    state.defaultCurrency = 'DKK';
+  }
+
+  // Migrer faste posteringer
+  state.faste = state.faste.map((entry) => {
+    if (!entry.beloeb && entry.beloeb_ore !== undefined) {
+      return {
+        ...entry,
+        beloeb: dkkOreToMoney(entry.beloeb_ore),
+      };
+    }
+    return entry;
+  });
+
+  // Migrer variable posteringer
+  state.variable = state.variable.map((entry) => {
+    if (!entry.beloeb && entry.beloeb_ore !== undefined) {
+      return {
+        ...entry,
+        beloeb: dkkOreToMoney(entry.beloeb_ore),
+      };
+    }
+    return entry;
+  });
+
+  // Opdater version
+  state.version = 2;
+
+  console.log('Migration: V1 → V2 gennemført');
 }
 
 /**
@@ -112,11 +186,13 @@ function migrateCategories(state: AppState): void {
  * Initialiserer app state
  * - Opretter ny state hvis ikke eksisterer
  * - Auto-reset variable posteringer ved månedsskifte
- * - Migrerer kategorier til nameKey format
+ * - Migrerer fra ældre versioner
+ * - Generer mock data hvis dev mode er aktiveret
  * @returns AppState
  */
 export function initAppState(): AppState {
   let state = getAppState();
+  const devModeActive = isDevMode();
 
   // Første kørsel: opret initial state
   if (!state) {
@@ -126,7 +202,29 @@ export function initAppState(): AppState {
     return state;
   }
 
-  // Migrer kategorier til nameKey format
+  // Hvis dev mode er aktiveret og vi ikke har mock data endnu, generer det
+  if (devModeActive && !localStorage.getItem('budgeto.mockDataGenerated')) {
+    console.log('Dev Mode: Regenererer mock data');
+    const mockData = generateMockData();
+    state.faste = mockData.faste;
+    state.variable = mockData.variable;
+    localStorage.setItem('budgeto.mockDataGenerated', 'true');
+    saveAppState(state);
+    localStorage.setItem(STORAGE_KEYS.LAST_OPENED_ISO, nowInCopenhagen().toISOString());
+    return state;
+  }
+
+  // Hvis dev mode er slået fra, fjern mock data flag
+  if (!devModeActive && localStorage.getItem('budgeto.mockDataGenerated')) {
+    localStorage.removeItem('budgeto.mockDataGenerated');
+  }
+
+  // Migrer fra version 1 til version 2
+  if (state.version === 1) {
+    migrateV1ToV2(state);
+  }
+
+  // Migrer kategorier til nameKey format (gælder alle versioner)
   migrateCategories(state);
 
   // Tjek om vi skal auto-reset variable posteringer
@@ -153,11 +251,15 @@ export function initAppState(): AppState {
 /**
  * Nulstiller AL data (manuelt reset fra indstillinger)
  * Sletter hele app state og seed flag
+ * Nulstiller også theme og locale for at trigge onboarding flow
  */
 export function resetAllData(): void {
   localStorage.removeItem(STORAGE_KEYS.APP_STATE);
   localStorage.removeItem(STORAGE_KEYS.SEED_APPLIED);
   localStorage.removeItem(STORAGE_KEYS.LAST_OPENED_ISO);
+  // Nulstil også theme og locale så onboarding kan vælge dem igen
+  localStorage.removeItem('budgeto.theme');
+  localStorage.removeItem('budgeto.locale');
   console.log('Total reset: Al data slettet');
 }
 
