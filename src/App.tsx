@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, type Expense, DEFAULT_CATEGORIES } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 
@@ -107,18 +107,65 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
 }
 
 function AddExpense({ onDone }: { onDone: () => void }) {
+  const amountRef = useRef<HTMLInputElement | null>(null)
+
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState<string>(DEFAULT_CATEGORIES[0])
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [saveAndAddAnother, setSaveAndAddAnother] = useState(true)
+
+  // Pick a better default category: last used (local), else first in list.
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem('budgeto:lastCategory')
+      if (last) setCategory(last)
+    } catch {}
+
+    // one-hand flow: focus amount immediately
+    setTimeout(() => amountRef.current?.focus(), 50)
+  }, [])
+
+  // Keep most-recent category at the front
+  const categories = useMemo(() => {
+    const uniq = new Set<string>()
+    const last = (() => {
+      try {
+        return localStorage.getItem('budgeto:lastCategory')
+      } catch {
+        return null
+      }
+    })()
+
+    const ordered: string[] = []
+    if (last) ordered.push(last)
+    for (const c of DEFAULT_CATEGORIES) ordered.push(c)
+    for (const c of ordered) {
+      if (!c) continue
+      if (uniq.has(c)) continue
+      uniq.add(c)
+      ordered[uniq.size - 1] = c
+    }
+
+    return Array.from(uniq)
+  }, [])
+
+  function setQuickAmount(v: number) {
+    setAmount(String(v))
+    // keep focus so you can just press save
+    amountRef.current?.focus()
+  }
+
   async function save() {
     setError(null)
+
     const normalized = amount.replace(',', '.').trim()
     const value = Number(normalized)
     if (!Number.isFinite(value) || value <= 0) {
       setError('Enter an amount (e.g. 40)')
+      amountRef.current?.focus()
       return
     }
 
@@ -132,13 +179,30 @@ function AddExpense({ onDone }: { onDone: () => void }) {
         amountOre,
         createdAt: Date.now(),
       })
-      setAmount('')
-      setNote('')
-      onDone()
+
+      try {
+        localStorage.setItem('budgeto:lastCategory', category)
+      } catch {}
+
+      if (saveAndAddAnother) {
+        // keep category, reset fields, keep focus
+        setAmount('')
+        setNote('')
+        setTimeout(() => amountRef.current?.focus(), 20)
+      } else {
+        onDone()
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Failed to save')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function onAmountKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      void save()
     }
   }
 
@@ -147,16 +211,27 @@ function AddExpense({ onDone }: { onDone: () => void }) {
       <div className="card">
         <label className="label">Amount (DKK)</label>
         <input
+          ref={amountRef}
           className="input"
           inputMode="decimal"
           placeholder="40"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          onKeyDown={onAmountKeyDown}
+          aria-label="Amount"
         />
+
+        <div className="chips quick" aria-label="Quick amounts">
+          {[20, 30, 40, 50, 75, 100].map((v) => (
+            <button key={v} type="button" className="chip" onClick={() => setQuickAmount(v)}>
+              {v}
+            </button>
+          ))}
+        </div>
 
         <label className="label">Category</label>
         <div className="chips">
-          {DEFAULT_CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <button
               key={c}
               className={c === category ? 'chip active' : 'chip'}
@@ -176,13 +251,22 @@ function AddExpense({ onDone }: { onDone: () => void }) {
           onChange={(e) => setNote(e.target.value)}
         />
 
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={saveAndAddAnother}
+            onChange={(e) => setSaveAndAddAnother(e.target.checked)}
+          />
+          <span>Save and add another</span>
+        </label>
+
         {error && <div className="error">{error}</div>}
 
         <button className="primary" onClick={save} disabled={saving}>
           {saving ? 'Saving…' : 'Save'}
         </button>
         <button className="ghost" onClick={onDone} disabled={saving}>
-          Cancel
+          Back
         </button>
       </div>
     </section>
