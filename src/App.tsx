@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { db, type Expense, DEFAULT_CATEGORIES } from './db'
+import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 
 type Tab = 'dashboard' | 'add' | 'settings'
@@ -207,6 +207,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
 
   // Keep most-recent category at the front
   const categories = useMemo(() => {
+    const allCats = getAllCategories()
     const uniq = new Set<string>()
     const last = (() => {
       try {
@@ -218,7 +219,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
 
     const ordered: string[] = []
     if (last) ordered.push(last)
-    for (const c of DEFAULT_CATEGORIES) ordered.push(c)
+    for (const c of allCats) ordered.push(c)
     for (const c of ordered) {
       if (!c) continue
       if (uniq.has(c)) continue
@@ -352,10 +353,35 @@ function AddExpense({ onDone }: { onDone: () => void }) {
 
 function Settings() {
   const [count, setCount] = useState<number | null>(null)
+  const [customCategories, setCustomCategories] = useState<string[]>(() => getCustomCategories())
+  const [newCategory, setNewCategory] = useState('')
 
   useMemo(() => {
     db.expenses.count().then(setCount)
   }, [])
+
+  function addCategory() {
+    const trimmed = newCategory.trim()
+    if (!trimmed) return
+
+    const allCats = getAllCategories()
+    if (allCats.includes(trimmed)) {
+      alert('Category already exists')
+      return
+    }
+
+    const updated = [...customCategories, trimmed]
+    setCustomCategories(updated)
+    saveCustomCategories(updated)
+    setNewCategory('')
+  }
+
+  function removeCategory(cat: string) {
+    if (!confirm(`Remove custom category "${cat}"?`)) return
+    const updated = customCategories.filter((c) => c !== cat)
+    setCustomCategories(updated)
+    saveCustomCategories(updated)
+  }
 
   async function reset() {
     if (!confirm('Delete all local data on this device?')) return
@@ -384,6 +410,54 @@ function Settings() {
 
   return (
     <section className="page">
+      <div className="card" style={{ marginBottom: 12 }}>
+        <h2>Categories</h2>
+        <div className="muted small" style={{ marginBottom: 10 }}>
+          Default: {DEFAULT_CATEGORIES.join(', ')}
+        </div>
+
+        {customCategories.length > 0 && (
+          <>
+            <label className="label">Your custom categories</label>
+            <ul className="list compact">
+              {customCategories.map((cat) => (
+                <li key={cat} className="listItem compact">
+                  <div className="strong">{cat}</div>
+                  <button className="mini danger" type="button" onClick={() => removeCategory(cat)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <label className="label">Add new category</label>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            className="input"
+            placeholder="Underholdning"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addCategory()
+              }
+            }}
+            style={{ flex: 1 }}
+          />
+          <button
+            className="primary"
+            onClick={addCategory}
+            disabled={!newCategory.trim()}
+            style={{ width: 'auto', marginTop: 0 }}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
       <div className="card">
         <h2>Settings</h2>
         <div className="kv"><span>Currency</span><span>DKK</span></div>

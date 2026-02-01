@@ -16,7 +16,39 @@ export const DEFAULT_CATEGORIES = [
   'Borne',
   'Abonnement',
   'Andet',
-] as const
+]
+
+// Get all categories (default + custom from localStorage)
+export function getAllCategories(): string[] {
+  try {
+    const raw = localStorage.getItem('budgeto:customCategories')
+    const custom: string[] = raw ? JSON.parse(raw) : []
+    const uniq = new Set<string>()
+    for (const c of [...DEFAULT_CATEGORIES, ...custom]) {
+      if (c && c.trim()) uniq.add(c.trim())
+    }
+    return Array.from(uniq)
+  } catch {
+    return [...DEFAULT_CATEGORIES]
+  }
+}
+
+// Save custom categories to localStorage
+export function saveCustomCategories(categories: string[]) {
+  try {
+    localStorage.setItem('budgeto:customCategories', JSON.stringify(categories))
+  } catch {}
+}
+
+// Get only custom categories
+export function getCustomCategories(): string[] {
+  try {
+    const raw = localStorage.getItem('budgeto:customCategories')
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
 
 class BudgetoDb extends Dexie {
   expenses!: Table<Expense, number>
