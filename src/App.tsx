@@ -47,8 +47,10 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
   const to = useMemo(() => endOfMonth(now), [now])
 
   const [items, setItems] = useState<Expense[] | null>(null)
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
 
-  useMemo(() => {
+  // Load monthly items (newest first)
+  useEffect(() => {
     let cancelled = false
     db.expenses
       .where('createdAt')
@@ -57,14 +59,55 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
       .sortBy('createdAt')
       .then((rows) => {
         if (cancelled) return
-        setItems(rows.reverse())
+        setItems(rows)
       })
     return () => {
       cancelled = true
     }
   }, [from, to])
 
+  // Auto-hide toast
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 5000)
+    return () => clearTimeout(t)
+  }, [toast])
+
   const total = (items ?? []).reduce((sum, e) => sum + e.amountOre, 0)
+
+  const byCategory = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const e of items ?? []) {
+      map.set(e.category, (map.get(e.category) ?? 0) + e.amountOre)
+    }
+    return Array.from(map.entries())
+      .map(([category, amountOre]) => ({ category, amountOre }))
+      .sort((a, b) => b.amountOre - a.amountOre)
+      .slice(0, 6)
+  }, [items])
+
+  async function removeWithUndo(expense: Expense) {
+    if (expense.id == null) return
+
+    // optimistic remove
+    setItems((prev) => (prev ? prev.filter((x) => x.id !== expense.id) : prev))
+
+    await db.expenses.delete(expense.id)
+
+    setToast({
+      text: `Deleted ${expense.category} (${formatDkk(expense.amountOre)})`,
+      undo: async () => {
+        const id = await db.expenses.add({
+          category: expense.category,
+          note: expense.note,
+          amountOre: expense.amountOre,
+          createdAt: expense.createdAt,
+        })
+        setItems((prev) => (prev ? [{ ...expense, id }, ...prev] : [{ ...expense, id }]))
+        setToast({ text: 'Undo: restored' })
+      },
+    })
+  }
 
   return (
     <section className="page">
@@ -73,6 +116,28 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         <div className="big">{formatDkk(total)}</div>
         <div className="muted">Tracked locally · offline-first</div>
         <button className="primary" onClick={onAdd}>Add expense</button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div className="row">
+          <h2>Top categories</h2>
+          <span className="muted">This month</span>
+        </div>
+
+        {!items ? (
+          <div className="muted">Loading…</div>
+        ) : byCategory.length === 0 ? (
+          <div className="muted">No data yet.</div>
+        ) : (
+          <ul className="list compact">
+            {byCategory.map((c) => (
+              <li key={c.category} className="listItem compact">
+                <div className="strong">{c.category}</div>
+                <div className="right strong">{formatDkk(c.amountOre)}</div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="card">
@@ -96,12 +161,24 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
                 <div className="right">
                   <div className="strong">{formatDkk(e.amountOre)}</div>
                   <div className="muted small">{new Date(e.createdAt).toLocaleString('da-DK')}</div>
+                  <button className="mini danger" type="button" onClick={() => void removeWithUndo(e)}>
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {toast && (
+        <div className="toast" role="status">
+          <div className="toastText">{toast.text}</div>
+          {toast.undo && (
+            <button className="toastBtn" onClick={() => void toast.undo?.()}>Undo</button>
+          )}
+        </div>
+      )}
     </section>
   )
 }

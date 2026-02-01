@@ -158,6 +158,8 @@ button:disabled { opacity: 0.6; }
 }
 
 .list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 10px; }
+.list.compact { gap: 8px; }
+
 .listItem {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -167,7 +169,41 @@ button:disabled { opacity: 0.6; }
   border: 1px solid var(--border);
   background: rgba(0,0,0,0.18);
 }
+.listItem.compact { padding: 10px; }
+
 .right { text-align: right; }
+
+button.mini {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(10px);
+}
+.toastText { font-size: 13px; color: var(--text); }
+.toastBtn {
+  width: auto;
+  margin-top: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border-color: rgba(94,234,212,0.6);
+  background: rgba(94,234,212,0.16);
+}
 
 .kv { display:flex; justify-content: space-between; margin-top: 10px; color: var(--muted); }
 .stack { display: grid; gap: 8px; }
