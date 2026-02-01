@@ -1,39 +1,26 @@
 {
   "name": "budgeto",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "dev:mock": "cross-env VITE_DEV_MODE=true vite --host",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host",
+    "pwa:icons": "node ./scripts/generate-icons.mjs"
   },
   "dependencies": {
-    "@hugeicons/core-free-icons": "^1.1.0",
-    "@hugeicons/vue": "^1.0.3",
-    "vue": "^3.5.22",
-    "vue-i18n": "^11.1.12"
+    "dexie": "^4.3.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {
-    "@types/node": "^24.6.0",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vitest/ui": "^3.2.4",
-    "@vue/tsconfig": "^0.8.1",
-    "autoprefixer": "^10.4.20",
-    "cross-env": "^10.1.0",
-    "eslint": "^9.37.0",
-    "jsdom": "^27.0.0",
-    "postcss": "^8.4.49",
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14",
-    "tailwindcss": "^3.4.17",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.3",
-    "vite": "^7.1.7",
-    "vite-plugin-pwa": "^1.0.3",
-    "vitest": "^3.2.4",
-    "vue-tsc": "^3.1.0"
+    "vite": "^7.2.4"
   }
 }
