@@ -25,9 +25,10 @@ function hashHue(input: string) {
 
 function categoryColor(category: string) {
   const hue = hashHue(category)
-  const sat = 70
-  const light = 55
-  return `hsl(${hue} ${sat}% ${light}%)`
+  return {
+    dot: `hsl(${hue} 70% 45%)`,
+    tint: `hsla(${hue}, 70%, 55%, 0.16)`,
+  }
 }
 
 type Tab = 'dashboard' | 'add' | 'settings'
@@ -227,9 +228,9 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         ) : (
           <ul className="list compact">
             {byCategory.map((c) => (
-              <li key={c.category} className="listItem compact">
+              <li key={c.category} className="listItem compact" style={{ background: categoryColor(c.category).tint }}>
                 <div className="row" style={{ alignItems: 'center' }}>
-                  <span className="dot" style={{ background: categoryColor(c.category) }} />
+                  <span className="dot" style={{ background: categoryColor(c.category).dot }} />
                   <div className="strong">{c.category}</div>
                 </div>
                 <div className="right strong">{formatDkk(c.amountOre)}</div>
@@ -260,10 +261,10 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         ) : (
           <ul className="list">
             {filtered.slice(0, 40).map((e) => (
-              <li key={e.id} className="listItem">
+              <li key={e.id} className="listItem" style={{ background: categoryColor(e.category).tint }}>
                 <div>
                   <div className="row" style={{ alignItems: 'center', gap: 8 }}>
-                    <span className="dot" style={{ background: categoryColor(e.category) }} />
+                    <span className="dot" style={{ background: categoryColor(e.category).dot }} />
                     <div className="strong">{e.category}</div>
                   </div>
                   <div className="muted small">{e.note || '—'}</div>
