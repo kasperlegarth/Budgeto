@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories, storageKey } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
+import { Bars, Sparkline, StackedBar } from './charts'
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
@@ -330,6 +331,7 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
   const [items, setItems] = useState<Expense[] | null>(null)
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
   const [query, setQuery] = useState('')
+  const [showEntries, setShowEntries] = useState(false)
 
   // Load monthly items (newest first)
   useEffect(() => {
@@ -402,6 +404,48 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
     return Math.round(total / denom)
   }, [items, from, to, total])
 
+  const dailySeries = useMemo(() => {
+    if (!items) return []
+    const days = 14
+    const end = Date.now()
+    const start = end - (days - 1) * 24 * 60 * 60 * 1000
+    const buckets = new Array(days).fill(0)
+
+    for (const e of items) {
+      const ts = e.createdAt
+      if (ts < start || ts > end) continue
+      const idx = Math.floor((ts - start) / (24 * 60 * 60 * 1000))
+      if (idx >= 0 && idx < days) buckets[idx] += e.amountOre
+    }
+
+    return buckets
+  }, [items])
+
+  const weeklyBars = useMemo(() => {
+    if (!items) return []
+    const start = from
+    const bars = [0, 0, 0, 0, 0]
+    for (const e of items) {
+      const idx = Math.floor((e.createdAt - start) / (7 * 24 * 60 * 60 * 1000))
+      if (idx >= 0 && idx < bars.length) bars[idx] += e.amountOre
+    }
+    // Trim empty tail weeks
+    while (bars.length > 1 && bars[bars.length - 1] === 0) bars.pop()
+    return bars
+  }, [items, from])
+
+  const categoryShare = useMemo(() => {
+    const top = byCategory.slice(0, 4)
+    const rest = byCategory.slice(4).reduce((s, c) => s + c.amountOre, 0)
+    const parts = top.map((c) => ({
+      label: c.category,
+      value: c.amountOre,
+      color: categoryColor(c.category).dot,
+    }))
+    if (rest > 0) parts.push({ label: 'Other', value: rest, color: 'rgba(17,24,39,0.25)' })
+    return parts
+  }, [byCategory])
+
   async function removeWithUndo(expense: Expense) {
     if (expense.id == null) return
 
@@ -449,7 +493,11 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
           </div>
         </div>
 
-        <div className="big">{formatDkk(total)}</div>
+        <div className="row rowCenter" style={{ gap: 12 }}>
+          <div className="big">{formatDkk(total)}</div>
+          <div className="spacer" />
+          <Sparkline values={dailySeries.map((v) => Math.round(v / 100))} />
+        </div>
 
         <div className="insights">
           <div className="pill">
@@ -468,48 +516,67 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
 
       <div className="card mb12">
         <div className="row">
-          <h2>{t(lang, 'topCategories')}</h2>
+          <h2>Overview</h2>
           <span className="muted">{monthLabel(from, lang)}</span>
         </div>
 
-        {!items ? (
-          <div className="muted">Loading…</div>
-        ) : byCategory.length === 0 ? (
-          <div className="muted">No data yet.</div>
-        ) : (
-          <ul className="list compact">
-            {byCategory.map((c) => (
-              <li key={c.category} className="listItem compact categoryItem" style={{ background: categoryColor(c.category).tint }}>
-                <div className="row rowCenter">
-                  <span className="dot" style={{ background: categoryColor(c.category).dot }} />
-                  <div className="strong">{c.category}</div>
+        <div className="vizRow">
+          <div className="vizCard">
+            <div className="muted small">Weekly</div>
+            <Bars values={weeklyBars.map((v) => Math.round(v / 100))} />
+          </div>
+          <div className="vizCard">
+            <div className="muted small">Category share</div>
+            <StackedBar parts={categoryShare} />
+            <div className="legend">
+              {categoryShare.slice(0, 4).map((p) => (
+                <div key={p.label} className="legendItem">
+                  <span className="dot" style={{ background: p.color }} />
+                  <span className="muted small">{p.label}</span>
                 </div>
-                <div className="right strong">{formatDkk(c.amountOre)}</div>
-              </li>
-            ))}
-          </ul>
-        )}
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="card">
-        <div className="row">
+        <div className="row rowCenter">
           <h2>{t(lang, 'latest')}</h2>
-          <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
+          <div className="spacer" />
+          <button className="ghost mini" type="button" onClick={() => setShowEntries((v) => !v)}>
+            {showEntries ? 'Hide' : 'Show'}
+          </button>
         </div>
 
-        <input
-          className="input mt10"
-          placeholder={t(lang, 'searchPlaceholder')}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-
-        {!filtered ? (
-          <div className="muted">Loading…</div>
-        ) : filtered.length === 0 ? (
-          <div className="muted">{t(lang, 'noMatches')}</div>
+        {!showEntries ? (
+          <div className="muted" style={{ marginTop: 10 }}>
+            Entries are hidden to keep the dashboard clean.
+          </div>
         ) : (
-          <ul className="list">
+          <>
+            <div className="row" style={{ marginTop: 10 }}>
+              <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
+              <span className="muted small">Search + delete + undo</span>
+            </div>
+
+            <input
+              className="input mt10"
+              placeholder={t(lang, 'searchPlaceholder')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </>
+        )}
+
+        {!showEntries ? null : (
+          <>
+            {!filtered ? (
+              <div className="muted">Loading…</div>
+            ) : filtered.length === 0 ? (
+              <div className="muted">{t(lang, 'noMatches')}</div>
+            ) : (
+              <ul className="list">
             {filtered.slice(0, 40).map((e) => (
               <li key={e.id} className="listItem">
                 <div>
@@ -531,6 +598,8 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
               </li>
             ))}
           </ul>
+        )}
+          </>
         )}
       </div>
 

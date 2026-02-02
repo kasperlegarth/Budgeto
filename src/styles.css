@@ -128,6 +128,44 @@ html, body {
   gap: 10px;
 }
 
+.vizRow {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.vizCard {
+  border: 1px solid rgba(17, 24, 39, 0.06);
+  background: rgba(255, 255, 255, 0.70);
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.stackedBar {
+  display: flex;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(17, 24, 39, 0.04);
+  height: 14px;
+  margin-top: 10px;
+}
+
+.stackedPart { height: 100%; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .pill {
   padding: 10px;
   border-radius: 16px;
