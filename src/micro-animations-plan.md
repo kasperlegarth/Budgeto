@@ -37,6 +37,10 @@ Goal: make the app feel more "alive" and premium without getting distracting. De
 - Sparkline: stroke draw animation.
 - Stacked bar: width transitions on update.
 
+7) **Exit animations ("next level")**
+- Toast: animate out on auto-hide and manual close.
+- Entries list delete: animate out the list row before removing from DOM.
+
 ## Implementation steps
 1. Add global motion tokens (`--t-fast`, `--t-med`, `--ease-out`).
 2. Add tab-change animation trigger in React (`tabAnimating` for 220ms).
@@ -45,9 +49,13 @@ Goal: make the app feel more "alive" and premium without getting distracting. De
    - `.navItem` transitions and active icon scale
    - button transitions and press feedback
    - card/list hover lift (hover-capable devices)
-   - `.toast` enter animation
+   - `.toast` enter + exit animation
    - chart animations (`.bars .bar`, `.spark path`, `.stackedPart`)
-4. Add `prefers-reduced-motion` overrides to remove the above animations.
+   - `.listItem.leaving` exit state
+4. Add small React state to keep elements mounted long enough for exit animation:
+   - `toastLeaving` + delayed unmount
+   - `leavingIds` for list rows
+5. Add `prefers-reduced-motion` overrides to remove the above animations.
 
 Notes:
 - We keep everything CSS-first to avoid complex JS animation state.

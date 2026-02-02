@@ -376,6 +376,14 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
 
   const [items, setItems] = useState<Expense[] | null>(null)
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
+  const [toastLeaving, setToastLeaving] = useState(false)
+  const closeToast = () => {
+    setToastLeaving(true)
+    setTimeout(() => {
+      setToast(null)
+      setToastLeaving(false)
+    }, 180)
+  }
   const [query, setQuery] = useState('')
   const [showEntries, setShowEntries] = useState(false)
 
@@ -396,10 +404,10 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
     }
   }, [from, to])
 
-  // Auto-hide toast
+  // Auto-hide toast (with exit animation)
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 5000)
+    const t = setTimeout(() => closeToast(), 5000)
     return () => clearTimeout(t)
   }, [toast])
 
@@ -492,14 +500,25 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
     return parts
   }, [byCategory])
 
+  const [leavingIds, setLeavingIds] = useState<Set<number>>(() => new Set())
+
   async function removeWithUndo(expense: Expense) {
     if (expense.id == null) return
 
-    // optimistic remove
-    setItems((prev) => (prev ? prev.filter((x) => x.id !== expense.id) : prev))
+    // Animate out before removal
+    setLeavingIds((prev) => new Set(prev).add(expense.id!))
+    setTimeout(() => {
+      setItems((prev) => (prev ? prev.filter((x) => x.id !== expense.id) : prev))
+      setLeavingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(expense.id!)
+        return next
+      })
+    }, 180)
 
     await db.expenses.delete(expense.id)
 
+    setToastLeaving(false)
     setToast({
       text: `${t(lang, 'deleted')} ${expense.category} (${formatDkk(expense.amountOre)})`,
       undo: async () => {
@@ -510,6 +529,7 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
           createdAt: expense.createdAt,
         })
         setItems((prev) => (prev ? [{ ...expense, id }, ...prev] : [{ ...expense, id }]))
+        setToastLeaving(false)
         setToast({ text: t(lang, 'restored') })
       },
     })
@@ -623,8 +643,8 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
               <div className="muted">{t(lang, 'noMatches')}</div>
             ) : (
               <ul className="list">
-            {filtered.slice(0, 40).map((e) => (
-              <li key={e.id} className="listItem">
+                {filtered.slice(0, 40).map((e) => (
+                  <li key={e.id} className={leavingIds.has(e.id!) ? 'listItem leaving' : 'listItem'}>
                 <div>
                   <div className="row rowCenter" style={{ gap: 8 }}>
                     <span className="dot" style={{ background: categoryColor(e.category).dot }} />
@@ -642,18 +662,31 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
                   </button>
                 </div>
               </li>
-            ))}
-          </ul>
-        )}
+                ))}
+              </ul>
+            )}
           </>
         )}
       </div>
 
       {toast && (
-        <div className="toast" role="status">
+        <div className={toastLeaving ? 'toast leaving' : 'toast'} role="status">
           <div className="toastText">{toast.text}</div>
           {toast.undo && (
-            <button className="toastBtn" onClick={() => void toast.undo?.()}>{t(lang, 'undo')}</button>
+            <button
+              className="toastBtn"
+              onClick={async () => {
+                await toast.undo?.()
+                closeToast()
+              }}
+            >
+              {t(lang, 'undo')}
+            </button>
+          )}
+          {!toast.undo && (
+            <button className="toastBtn" onClick={() => closeToast()} aria-label="Close">
+              OK
+            </button>
           )}
         </div>
       )}
