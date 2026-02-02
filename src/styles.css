@@ -64,8 +64,46 @@ html, body {
 
 .hero {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.segBtn {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 10px;
+  border-radius: 0;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+}
+.segBtn:last-child { border-right: 0; }
+
+.insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pill {
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.20);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  flex: 0 0 auto;
 }
 
 .big {

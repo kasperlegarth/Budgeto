@@ -2,6 +2,34 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
+}
+
+function monthLabel(ts: number) {
+  return new Date(ts).toLocaleDateString('da-DK', { month: 'long', year: 'numeric' })
+}
+
+function addMonths(ts: number, delta: number) {
+  const d = new Date(ts)
+  d.setDate(1)
+  d.setMonth(d.getMonth() + delta)
+  return d.getTime()
+}
+
+function hashHue(input: string) {
+  let h = 0
+  for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0
+  return h % 360
+}
+
+function categoryColor(category: string) {
+  const hue = hashHue(category)
+  const sat = 70
+  const light = 55
+  return `hsl(${hue} ${sat}% ${light}%)`
+}
+
 type Tab = 'dashboard' | 'add' | 'settings'
 
 export default function App() {
@@ -43,11 +71,13 @@ function Nav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 
 function Dashboard({ onAdd }: { onAdd: () => void }) {
   const now = Date.now()
-  const from = useMemo(() => startOfMonth(now), [now])
-  const to = useMemo(() => endOfMonth(now), [now])
+  const [monthTs, setMonthTs] = useState(() => startOfMonth(now))
+  const from = useMemo(() => startOfMonth(monthTs), [monthTs])
+  const to = useMemo(() => endOfMonth(monthTs), [monthTs])
 
   const [items, setItems] = useState<Expense[] | null>(null)
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
+  const [query, setQuery] = useState('')
 
   // Load monthly items (newest first)
   useEffect(() => {
@@ -73,6 +103,18 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
     return () => clearTimeout(t)
   }, [toast])
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!items) return null
+    if (!q) return items
+    return items.filter((e) => {
+      const note = (e.note ?? '').toLowerCase()
+      const cat = (e.category ?? '').toLowerCase()
+      const amt = (e.amountOre / 100).toFixed(2)
+      return note.includes(q) || cat.includes(q) || amt.includes(q)
+    })
+  }, [items, query])
+
   const total = (items ?? []).reduce((sum, e) => sum + e.amountOre, 0)
 
   const byCategory = useMemo(() => {
@@ -85,6 +127,28 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
       .sort((a, b) => b.amountOre - a.amountOre)
       .slice(0, 6)
   }, [items])
+
+  const biggest = useMemo(() => {
+    if (!items || items.length === 0) return null
+    return items.reduce((max, e) => (e.amountOre > max.amountOre ? e : max), items[0])
+  }, [items])
+
+  const avgPerDay = useMemo(() => {
+    if (!items) return null
+    const start = new Date(from)
+    const end = new Date(to)
+
+    // if current month, only count days up to today (min 1)
+    const today = new Date()
+    const isCurrentMonth =
+      start.getFullYear() === today.getFullYear() && start.getMonth() === today.getMonth()
+
+    const daysInMonth = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    const dayOfMonth = today.getDate()
+
+    const denom = clamp(isCurrentMonth ? dayOfMonth : daysInMonth, 1, 31)
+    return Math.round(total / denom)
+  }, [items, from, to, total])
 
   async function removeWithUndo(expense: Expense) {
     if (expense.id == null) return
@@ -112,8 +176,40 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
   return (
     <section className="page">
       <div className="card hero">
-        <div className="muted">This month</div>
+        <div className="row" style={{ alignItems: 'center' }}>
+          <div className="muted">{monthLabel(from)}</div>
+          <div className="spacer" />
+          <div className="seg">
+            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, -1))} aria-label="Previous month">
+              ←
+            </button>
+            <button
+              className="segBtn"
+              type="button"
+              onClick={() => setMonthTs(startOfMonth(Date.now()))}
+              aria-label="Go to current month"
+            >
+              Now
+            </button>
+            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, 1))} aria-label="Next month">
+              →
+            </button>
+          </div>
+        </div>
+
         <div className="big">{formatDkk(total)}</div>
+
+        <div className="insights">
+          <div className="pill">
+            <div className="muted small">Avg/day</div>
+            <div className="strong">{avgPerDay == null ? '—' : formatDkk(avgPerDay)}</div>
+          </div>
+          <div className="pill">
+            <div className="muted small">Biggest</div>
+            <div className="strong">{biggest ? formatDkk(biggest.amountOre) : '—'}</div>
+          </div>
+        </div>
+
         <div className="muted">Tracked locally · offline-first</div>
         <button className="primary" onClick={onAdd}>Add expense</button>
       </div>
@@ -121,7 +217,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
       <div className="card" style={{ marginBottom: 12 }}>
         <div className="row">
           <h2>Top categories</h2>
-          <span className="muted">This month</span>
+          <span className="muted">{monthLabel(from)}</span>
         </div>
 
         {!items ? (
@@ -132,7 +228,10 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
           <ul className="list compact">
             {byCategory.map((c) => (
               <li key={c.category} className="listItem compact">
-                <div className="strong">{c.category}</div>
+                <div className="row" style={{ alignItems: 'center' }}>
+                  <span className="dot" style={{ background: categoryColor(c.category) }} />
+                  <div className="strong">{c.category}</div>
+                </div>
                 <div className="right strong">{formatDkk(c.amountOre)}</div>
               </li>
             ))}
@@ -143,19 +242,30 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
       <div className="card">
         <div className="row">
           <h2>Latest</h2>
-          <span className="muted">{items?.length ?? 0} entries</span>
+          <span className="muted">{filtered?.length ?? items?.length ?? 0} entries</span>
         </div>
 
-        {!items ? (
+        <input
+          className="input"
+          placeholder="Search (category, note, amount)…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ marginTop: 10 }}
+        />
+
+        {!filtered ? (
           <div className="muted">Loading…</div>
-        ) : items.length === 0 ? (
-          <div className="muted">No expenses yet. Add your first one.</div>
+        ) : filtered.length === 0 ? (
+          <div className="muted">No matches.</div>
         ) : (
           <ul className="list">
-            {items.slice(0, 20).map((e) => (
+            {filtered.slice(0, 40).map((e) => (
               <li key={e.id} className="listItem">
                 <div>
-                  <div className="strong">{e.category}</div>
+                  <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+                    <span className="dot" style={{ background: categoryColor(e.category) }} />
+                    <div className="strong">{e.category}</div>
+                  </div>
                   <div className="muted small">{e.note || '—'}</div>
                 </div>
                 <div className="right">
