@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories } from './db'
+import { DB_NAME, db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories, storageKey } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 
 function clamp(n: number, min: number, max: number) {
@@ -33,8 +33,50 @@ function categoryColor(category: string) {
 
 type Tab = 'dashboard' | 'add' | 'settings'
 
+const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true'
+
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard')
+
+  // Seed demo data into a separate DB so it never pollutes real data.
+  useEffect(() => {
+    if (!DEMO) return
+    let cancelled = false
+
+    async function seed() {
+      const count = await db.expenses.count()
+      if (cancelled) return
+      if (count > 0) return
+
+      const categories = getAllCategories()
+      const notes = ['Netto', 'Rema', 'Bilka', 'Circle K', 'Apotek', 'Spotify', 'HBO', 'Wolt', 'Føtex', 'Bageren']
+
+      const now = Date.now()
+      const items: Omit<Expense, 'id'>[] = []
+
+      // 35-ish entries spread over last ~25 days
+      for (let i = 0; i < 36; i++) {
+        const daysAgo = Math.floor(Math.random() * 25)
+        const createdAt = now - daysAgo * 24 * 60 * 60 * 1000 - Math.floor(Math.random() * 10) * 60 * 60 * 1000
+        const category = categories[Math.floor(Math.random() * categories.length)] ?? 'Andet'
+        const base = [25, 39, 45, 59, 75, 99, 129, 179, 249][Math.floor(Math.random() * 9)]
+        const amountOre = (base + Math.floor(Math.random() * 25)) * 100
+        const note = Math.random() > 0.25 ? notes[Math.floor(Math.random() * notes.length)] : null
+
+        items.push({ createdAt, category, amountOre, note })
+      }
+
+      // newest first for nicer first impression
+      items.sort((a, b) => b.createdAt - a.createdAt)
+      await db.expenses.bulkAdd(items)
+    }
+
+    void seed()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="app">
@@ -53,7 +95,10 @@ function Header({ tab }: { tab: Tab }) {
   const title = tab === 'dashboard' ? 'Dashboard' : tab === 'add' ? 'Add' : 'Settings'
   return (
     <header className="top">
-      <div className="brand">Budgeto</div>
+      <div className="row rowCenter" style={{ gap: 10 }}>
+        <div className="brand">Budgeto</div>
+        {DEMO && <span className="badge" title={`Demo mode (${DB_NAME})`}>Demo</span>}
+      </div>
       <div className="title">{title}</div>
       <div className="spacer" />
     </header>
@@ -309,7 +354,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
   // Pick a better default category: last used (local), else first in list.
   useEffect(() => {
     try {
-      const last = localStorage.getItem('budgeto:lastCategory')
+      const last = localStorage.getItem(storageKey('lastCategory'))
       if (last) setCategory(last)
     } catch {}
 
@@ -323,7 +368,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
     const uniq = new Set<string>()
     const last = (() => {
       try {
-        return localStorage.getItem('budgeto:lastCategory')
+        return localStorage.getItem(storageKey('lastCategory'))
       } catch {
         return null
       }
@@ -371,7 +416,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
       })
 
       try {
-        localStorage.setItem('budgeto:lastCategory', category)
+        localStorage.setItem(storageKey('lastCategory'), category)
       } catch {}
 
       if (saveAndAddAnother) {
