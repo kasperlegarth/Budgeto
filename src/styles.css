@@ -195,6 +195,15 @@ h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
   box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.16);
 }
 
+.select {
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips.quick { margin-top: 10px; }
 

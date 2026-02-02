@@ -6,8 +6,116 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
 }
 
-function monthLabel(ts: number) {
-  return new Date(ts).toLocaleDateString('da-DK', { month: 'long', year: 'numeric' })
+type Lang = 'da' | 'en'
+
+const LANG_KEY = 'lang'
+
+function getLang(): Lang {
+  try {
+    const v = localStorage.getItem(storageKey(LANG_KEY))
+    return v === 'en' ? 'en' : 'da'
+  } catch {
+    return 'da'
+  }
+}
+
+function setLang(lang: Lang) {
+  try {
+    localStorage.setItem(storageKey(LANG_KEY), lang)
+  } catch {}
+}
+
+const STRINGS: Record<Lang, Record<string, string>> = {
+  da: {
+    dashboard: 'Dashboard',
+    add: 'Tilføj',
+    settings: 'Indstillinger',
+    addExpense: 'Tilføj udgift',
+    thisMonth: 'Denne måned',
+    trackedLocally: 'Gemmes lokalt · offline-first',
+    topCategories: 'Top kategorier',
+    latest: 'Seneste',
+    entries: 'poster',
+    searchPlaceholder: 'Søg (kategori, note, beløb)…',
+    noMatches: 'Ingen matches.',
+    avgPerDay: 'Gns./dag',
+    biggest: 'Størst',
+    now: 'Nu',
+    amountDkk: 'Beløb (DKK)',
+    category: 'Kategori',
+    noteOptional: 'Note (valgfri)',
+    save: 'Gem',
+    saving: 'Gemmer…',
+    back: 'Tilbage',
+    saveAndAddAnother: 'Gem og tilføj en mere',
+    enterAmount: 'Skriv et beløb (fx 40)',
+    categories: 'Kategorier',
+    yourCustomCategories: 'Dine kategorier',
+    addNewCategory: 'Tilføj ny kategori',
+    remove: 'Fjern',
+    currency: 'Valuta',
+    localEntries: 'Lokale poster',
+    exportJson: 'Eksportér JSON',
+    resetLocalData: 'Nulstil lokale data',
+    resetConfirm: 'Slet alle lokale data på denne enhed?',
+    done: 'Færdig',
+    language: 'Sprog',
+    demo: 'demo',
+    deleted: 'Slettet',
+    undo: 'Fortryd',
+    restored: 'Gendannet',
+  },
+  en: {
+    dashboard: 'Dashboard',
+    add: 'Add',
+    settings: 'Settings',
+    addExpense: 'Add expense',
+    thisMonth: 'This month',
+    trackedLocally: 'Stored locally · offline-first',
+    topCategories: 'Top categories',
+    latest: 'Latest',
+    entries: 'entries',
+    searchPlaceholder: 'Search (category, note, amount)…',
+    noMatches: 'No matches.',
+    avgPerDay: 'Avg/day',
+    biggest: 'Biggest',
+    now: 'Now',
+    amountDkk: 'Amount (DKK)',
+    category: 'Category',
+    noteOptional: 'Note (optional)',
+    save: 'Save',
+    saving: 'Saving…',
+    back: 'Back',
+    saveAndAddAnother: 'Save and add another',
+    enterAmount: 'Enter an amount (e.g. 40)',
+    categories: 'Categories',
+    yourCustomCategories: 'Your categories',
+    addNewCategory: 'Add new category',
+    remove: 'Remove',
+    currency: 'Currency',
+    localEntries: 'Local entries',
+    exportJson: 'Export JSON',
+    resetLocalData: 'Reset local data',
+    resetConfirm: 'Delete all local data on this device?',
+    done: 'Done',
+    language: 'Language',
+    demo: 'demo',
+    deleted: 'Deleted',
+    undo: 'Undo',
+    restored: 'Restored',
+  },
+}
+
+function t(lang: Lang, key: string) {
+  return STRINGS[lang][key] ?? key
+}
+
+function localeFor(lang: Lang) {
+  return lang === 'da' ? 'da-DK' : 'en-US'
+}
+
+function monthLabel(ts: number, lang: Lang) {
+  return new Date(ts).toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' })
 }
 
 function addMonths(ts: number, delta: number) {
@@ -37,6 +145,7 @@ const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.locatio
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard')
+  const [lang, setLangState] = useState<Lang>(() => getLang())
 
   // Seed demo data into a separate DB so it never pollutes real data.
   useEffect(() => {
@@ -97,24 +206,32 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header tab={tab} />
+      <Header tab={tab} lang={lang} />
       <main className="main">
-        {tab === 'dashboard' && <Dashboard onAdd={() => setTab('add')} />}
-        {tab === 'add' && <AddExpense onDone={() => setTab('dashboard')} />}
-        {tab === 'settings' && <Settings />}
+        {tab === 'dashboard' && <Dashboard onAdd={() => setTab('add')} lang={lang} />}
+        {tab === 'add' && <AddExpense onDone={() => setTab('dashboard')} lang={lang} />}
+        {tab === 'settings' && (
+          <Settings
+            lang={lang}
+            onLangChange={(next) => {
+              setLang(next)
+              setLangState(next)
+            }}
+          />
+        )}
       </main>
-      <Nav tab={tab} setTab={setTab} />
+      <Nav tab={tab} setTab={setTab} lang={lang} />
     </div>
   )
 }
 
-function Header({ tab }: { tab: Tab }) {
-  const title = tab === 'dashboard' ? 'Dashboard' : tab === 'add' ? 'Add' : 'Settings'
+function Header({ tab, lang }: { tab: Tab; lang: Lang }) {
+  const title = tab === 'dashboard' ? t(lang, 'dashboard') : tab === 'add' ? t(lang, 'add') : t(lang, 'settings')
   return (
     <header className="top" aria-label="Header">
       <div className="logoWrap" aria-hidden>
         <div className="brandLogo">Budgeto</div>
-        {DEMO && <div className="logoSub">demo</div>}
+        {DEMO && <div className="logoSub">{t(lang, 'demo')}</div>}
       </div>
       {/* keep accessible page title for screen readers */}
       <div className="srOnly">{title}</div>
@@ -178,7 +295,7 @@ function Icon({ name }: { name: 'dashboard' | 'settings' | 'plus' }) {
   )
 }
 
-function Nav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: Lang }) {
   return (
     <nav className="nav" aria-label="Primary">
       <button
@@ -186,10 +303,10 @@ function Nav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
         onClick={() => setTab('dashboard')}
       >
         <Icon name="dashboard" />
-        <span className="navLabel">Dashboard</span>
+        <span className="navLabel">{t(lang, 'dashboard')}</span>
       </button>
 
-      <button className="navAdd" onClick={() => setTab('add')} aria-label="Add expense">
+      <button className="navAdd" onClick={() => setTab('add')} aria-label={t(lang, 'addExpense')}>
         <Icon name="plus" />
       </button>
 
@@ -198,13 +315,13 @@ function Nav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
         onClick={() => setTab('settings')}
       >
         <Icon name="settings" />
-        <span className="navLabel">Settings</span>
+        <span className="navLabel">{t(lang, 'settings')}</span>
       </button>
     </nav>
   )
 }
 
-function Dashboard({ onAdd }: { onAdd: () => void }) {
+function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
   const now = Date.now()
   const [monthTs, setMonthTs] = useState(() => startOfMonth(now))
   const from = useMemo(() => startOfMonth(monthTs), [monthTs])
@@ -294,7 +411,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
     await db.expenses.delete(expense.id)
 
     setToast({
-      text: `Deleted ${expense.category} (${formatDkk(expense.amountOre)})`,
+      text: `${t(lang, 'deleted')} ${expense.category} (${formatDkk(expense.amountOre)})`,
       undo: async () => {
         const id = await db.expenses.add({
           category: expense.category,
@@ -303,7 +420,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
           createdAt: expense.createdAt,
         })
         setItems((prev) => (prev ? [{ ...expense, id }, ...prev] : [{ ...expense, id }]))
-        setToast({ text: 'Undo: restored' })
+        setToast({ text: t(lang, 'restored') })
       },
     })
   }
@@ -312,7 +429,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
     <section className="page">
       <div className="card hero">
         <div className="row heroHeader">
-          <div className="muted">{monthLabel(from)}</div>
+          <div className="muted">{monthLabel(from, lang)}</div>
           <div className="spacer" />
           <div className="seg">
             <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, -1))} aria-label="Previous month">
@@ -324,7 +441,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
               onClick={() => setMonthTs(startOfMonth(Date.now()))}
               aria-label="Go to current month"
             >
-              Now
+              {t(lang, 'now')}
             </button>
             <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, 1))} aria-label="Next month">
               →
@@ -336,23 +453,23 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
 
         <div className="insights">
           <div className="pill">
-            <div className="muted small">Avg/day</div>
+            <div className="muted small">{t(lang, 'avgPerDay')}</div>
             <div className="strong">{avgPerDay == null ? '—' : formatDkk(avgPerDay)}</div>
           </div>
           <div className="pill">
-            <div className="muted small">Biggest</div>
+            <div className="muted small">{t(lang, 'biggest')}</div>
             <div className="strong">{biggest ? formatDkk(biggest.amountOre) : '—'}</div>
           </div>
         </div>
 
-        <div className="muted">Tracked locally · offline-first</div>
-        <button className="primary" onClick={onAdd}>Add expense</button>
+        <div className="muted">{t(lang, 'trackedLocally')}</div>
+        <button className="primary" onClick={onAdd}>{t(lang, 'addExpense')}</button>
       </div>
 
       <div className="card mb12">
         <div className="row">
-          <h2>Top categories</h2>
-          <span className="muted">{monthLabel(from)}</span>
+          <h2>{t(lang, 'topCategories')}</h2>
+          <span className="muted">{monthLabel(from, lang)}</span>
         </div>
 
         {!items ? (
@@ -376,13 +493,13 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
 
       <div className="card">
         <div className="row">
-          <h2>Latest</h2>
-          <span className="muted">{filtered?.length ?? items?.length ?? 0} entries</span>
+          <h2>{t(lang, 'latest')}</h2>
+          <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
         </div>
 
         <input
           className="input mt10"
-          placeholder="Search (category, note, amount)…"
+          placeholder={t(lang, 'searchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -390,7 +507,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         {!filtered ? (
           <div className="muted">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="muted">No matches.</div>
+          <div className="muted">{t(lang, 'noMatches')}</div>
         ) : (
           <ul className="list">
             {filtered.slice(0, 40).map((e) => (
@@ -406,9 +523,9 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
                 </div>
                 <div className="right">
                   <div className="strong">{formatDkk(e.amountOre)}</div>
-                  <div className="muted small">{new Date(e.createdAt).toLocaleString('da-DK')}</div>
+                  <div className="muted small">{new Date(e.createdAt).toLocaleString(localeFor(lang))}</div>
                   <button className="mini danger" type="button" onClick={() => void removeWithUndo(e)}>
-                    Delete
+                    {t(lang, 'remove')}
                   </button>
                 </div>
               </li>
@@ -421,7 +538,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         <div className="toast" role="status">
           <div className="toastText">{toast.text}</div>
           {toast.undo && (
-            <button className="toastBtn" onClick={() => void toast.undo?.()}>Undo</button>
+            <button className="toastBtn" onClick={() => void toast.undo?.()}>{t(lang, 'undo')}</button>
           )}
         </div>
       )}
@@ -429,7 +546,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
   )
 }
 
-function AddExpense({ onDone }: { onDone: () => void }) {
+function AddExpense({ onDone, lang }: { onDone: () => void; lang: Lang }) {
   const amountRef = useRef<HTMLInputElement | null>(null)
 
   const [amount, setAmount] = useState('')
@@ -488,7 +605,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
     const normalized = amount.replace(',', '.').trim()
     const value = Number(normalized)
     if (!Number.isFinite(value) || value <= 0) {
-      setError('Enter an amount (e.g. 40)')
+      setError(t(lang, 'enterAmount'))
       amountRef.current?.focus()
       return
     }
@@ -533,7 +650,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
   return (
     <section className="page">
       <div className="card">
-        <label className="label">Amount (DKK)</label>
+        <label className="label">{t(lang, 'amountDkk')}</label>
         <input
           ref={amountRef}
           className="input"
@@ -553,7 +670,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
           ))}
         </div>
 
-        <label className="label">Category</label>
+        <label className="label">{t(lang, 'category')}</label>
         <div className="chips">
           {categories.map((c) => (
             <button
@@ -567,7 +684,7 @@ function AddExpense({ onDone }: { onDone: () => void }) {
           ))}
         </div>
 
-        <label className="label">Note (optional)</label>
+        <label className="label">{t(lang, 'noteOptional')}</label>
         <input
           className="input"
           placeholder="Frokost…"
@@ -581,23 +698,23 @@ function AddExpense({ onDone }: { onDone: () => void }) {
             checked={saveAndAddAnother}
             onChange={(e) => setSaveAndAddAnother(e.target.checked)}
           />
-          <span>Save and add another</span>
+          <span>{t(lang, 'saveAndAddAnother')}</span>
         </label>
 
         {error && <div className="error">{error}</div>}
 
         <button className="primary" onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? t(lang, 'saving') : t(lang, 'save')}
         </button>
         <button className="ghost" onClick={onDone} disabled={saving}>
-          Back
+          {t(lang, 'back')}
         </button>
       </div>
     </section>
   )
 }
 
-function Settings() {
+function Settings({ lang, onLangChange }: { lang: Lang; onLangChange: (l: Lang) => void }) {
   const [count, setCount] = useState<number | null>(null)
   const [customCategories, setCustomCategories] = useState<string[]>(() => getCustomCategories())
   const [newCategory, setNewCategory] = useState('')
@@ -612,7 +729,7 @@ function Settings() {
 
     const allCats = getAllCategories()
     if (allCats.includes(trimmed)) {
-      alert('Category already exists')
+      alert(lang === 'da' ? 'Kategorien findes allerede' : 'Category already exists')
       return
     }
 
@@ -630,10 +747,10 @@ function Settings() {
   }
 
   async function reset() {
-    if (!confirm('Delete all local data on this device?')) return
+    if (!confirm(t(lang, 'resetConfirm'))) return
     await db.expenses.clear()
     setCount(0)
-    alert('Done')
+    alert(t(lang, 'done'))
   }
 
   async function exportJson() {
@@ -657,20 +774,31 @@ function Settings() {
   return (
     <section className="page">
       <div className="card" style={{ marginBottom: 12 }}>
-        <h2>Categories</h2>
+        <h2>{t(lang, 'categories')}</h2>
+        <div className="kv"><span>{t(lang, 'language')}</span>
+          <select
+            className="select"
+            value={lang}
+            onChange={(e) => onLangChange(e.target.value === 'en' ? 'en' : 'da')}
+            aria-label={t(lang, 'language')}
+          >
+            <option value="da">Dansk</option>
+            <option value="en">English</option>
+          </select>
+        </div>
         <div className="muted small" style={{ marginBottom: 10 }}>
           Default: {DEFAULT_CATEGORIES.join(', ')}
         </div>
 
         {customCategories.length > 0 && (
           <>
-            <label className="label">Your custom categories</label>
+            <label className="label">{t(lang, 'yourCustomCategories')}</label>
             <ul className="list compact">
               {customCategories.map((cat) => (
                 <li key={cat} className="listItem compact">
                   <div className="strong">{cat}</div>
                   <button className="mini danger" type="button" onClick={() => removeCategory(cat)}>
-                    Remove
+                    {t(lang, 'remove')}
                   </button>
                 </li>
               ))}
@@ -678,7 +806,7 @@ function Settings() {
           </>
         )}
 
-        <label className="label">Add new category</label>
+        <label className="label">{t(lang, 'addNewCategory')}</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
             className="input"
@@ -699,21 +827,21 @@ function Settings() {
             disabled={!newCategory.trim()}
             style={{ width: 'auto', marginTop: 0 }}
           >
-            Add
+            {t(lang, 'add')}
           </button>
         </div>
       </div>
 
       <div className="card">
-        <h2>Settings</h2>
-        <div className="kv"><span>Currency</span><span>DKK</span></div>
-        <div className="kv"><span>Local entries</span><span>{count ?? '…'}</span></div>
+        <h2>{t(lang, 'settings')}</h2>
+        <div className="kv"><span>{t(lang, 'currency')}</span><span>DKK</span></div>
+        <div className="kv"><span>{t(lang, 'localEntries')}</span><span>{count ?? '…'}</span></div>
         <div className="muted small">
-          V1 stores everything locally on this device (offline-first).
+          {t(lang, 'trackedLocally')}
         </div>
         <div className="stack">
-          <button className="ghost" onClick={exportJson}>Export JSON</button>
-          <button className="danger" onClick={reset}>Reset local data</button>
+          <button className="ghost" onClick={exportJson}>{t(lang, 'exportJson')}</button>
+          <button className="danger" onClick={reset}>{t(lang, 'resetLocalData')}</button>
         </div>
       </div>
     </section>
