@@ -326,25 +326,37 @@ function Icon({ name }: { name: 'dashboard' | 'settings' | 'plus' }) {
 function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: Lang }) {
   return (
     <nav className="nav" aria-label="Primary">
-      <button
-        className={tab === 'dashboard' ? 'navBtn active' : 'navBtn'}
-        onClick={() => setTab('dashboard')}
-      >
-        <Icon name="dashboard" />
-        <span className="navLabel">{t(lang, 'dashboard')}</span>
-      </button>
+      <div className="navBar" role="list">
+        <button
+          role="listitem"
+          className={tab === 'dashboard' ? 'navItem active' : 'navItem'}
+          onClick={() => setTab('dashboard')}
+        >
+          <Icon name="dashboard" />
+          <span className="navLabel">{t(lang, 'dashboard')}</span>
+        </button>
 
-      <button className="navAdd" onClick={() => setTab('add')} aria-label={t(lang, 'addExpense')}>
-        <Icon name="plus" />
-      </button>
+        <button
+          role="listitem"
+          className={tab === 'add' ? 'navItem navItemAdd active' : 'navItem navItemAdd'}
+          onClick={() => setTab('add')}
+          aria-label={t(lang, 'addExpense')}
+        >
+          <span className="navAddInner" aria-hidden>
+            <Icon name="plus" />
+          </span>
+          <span className="navLabel">{t(lang, 'add')}</span>
+        </button>
 
-      <button
-        className={tab === 'settings' ? 'navBtn active' : 'navBtn'}
-        onClick={() => setTab('settings')}
-      >
-        <Icon name="settings" />
-        <span className="navLabel">{t(lang, 'settings')}</span>
-      </button>
+        <button
+          role="listitem"
+          className={tab === 'settings' ? 'navItem active' : 'navItem'}
+          onClick={() => setTab('settings')}
+        >
+          <Icon name="settings" />
+          <span className="navLabel">{t(lang, 'settings')}</span>
+        </button>
+      </div>
     </nav>
   )
 }
