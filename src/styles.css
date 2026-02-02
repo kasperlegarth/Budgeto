@@ -29,32 +29,56 @@ html, body {
 .app {
   height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 1fr auto;
 }
 
 .top {
-  padding: 12px 14px;
+  position: fixed;
+  top: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0; /* content scrolls over it */
+}
+
+.logoWrap {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
-  background: rgba(255, 255, 255, 0.80);
-  backdrop-filter: blur(6px);
+  justify-items: center;
+  gap: 2px;
 }
 
-.brand {
+.brandLogo {
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.55);
 }
 
-.title {
-  font-weight: 600;
-  opacity: 0.95;
+.logoSub {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.35);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .main {
   overflow: auto;
+  position: relative;
+  z-index: 1; /* sits above logo */
 }
 
 .page {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DB_NAME, db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories, storageKey } from './db'
+import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories, storageKey } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 
 function clamp(n: number, min: number, max: number) {
@@ -52,18 +52,35 @@ export default function App() {
       const notes = ['Netto', 'Rema', 'Bilka', 'Circle K', 'Apotek', 'Spotify', 'HBO', 'Wolt', 'Føtex', 'Bageren']
 
       const now = Date.now()
+      const startThisMonth = startOfMonth(now)
+      const startLastMonth = startOfMonth(addMonths(now, -1))
+
       const items: Omit<Expense, 'id'>[] = []
 
-      // 35-ish entries spread over last ~25 days
-      for (let i = 0; i < 36; i++) {
-        const daysAgo = Math.floor(Math.random() * 25)
-        const createdAt = now - daysAgo * 24 * 60 * 60 * 1000 - Math.floor(Math.random() * 10) * 60 * 60 * 1000
+      // Heavily bias toward *current month* so the default dashboard looks populated.
+      // Also add some last-month entries to make month-nav interesting.
+      const makeEntry = (createdAt: number) => {
         const category = categories[Math.floor(Math.random() * categories.length)] ?? 'Andet'
-        const base = [25, 39, 45, 59, 75, 99, 129, 179, 249][Math.floor(Math.random() * 9)]
-        const amountOre = (base + Math.floor(Math.random() * 25)) * 100
-        const note = Math.random() > 0.25 ? notes[Math.floor(Math.random() * notes.length)] : null
-
+        const base = [25, 39, 45, 59, 75, 99, 129, 179, 249, 349][Math.floor(Math.random() * 10)]
+        const amountOre = (base + Math.floor(Math.random() * 35)) * 100
+        const note = Math.random() > 0.22 ? notes[Math.floor(Math.random() * notes.length)] : null
         items.push({ createdAt, category, amountOre, note })
+      }
+
+      // Current month: ~50 entries spread across days
+      for (let i = 0; i < 50; i++) {
+        const dayOffset = Math.floor(Math.random() * 28)
+        const hour = Math.floor(Math.random() * 14) + 7
+        const minute = Math.floor(Math.random() * 60)
+        makeEntry(startThisMonth + dayOffset * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000 + minute * 60 * 1000)
+      }
+
+      // Last month: ~18 entries
+      for (let i = 0; i < 18; i++) {
+        const dayOffset = Math.floor(Math.random() * 28)
+        const hour = Math.floor(Math.random() * 14) + 7
+        const minute = Math.floor(Math.random() * 60)
+        makeEntry(startLastMonth + dayOffset * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000 + minute * 60 * 1000)
       }
 
       // newest first for nicer first impression
@@ -94,13 +111,13 @@ export default function App() {
 function Header({ tab }: { tab: Tab }) {
   const title = tab === 'dashboard' ? 'Dashboard' : tab === 'add' ? 'Add' : 'Settings'
   return (
-    <header className="top">
-      <div className="row rowCenter" style={{ gap: 10 }}>
-        <div className="brand">Budgeto</div>
-        {DEMO && <span className="badge" title={`Demo mode (${DB_NAME})`}>Demo</span>}
+    <header className="top" aria-label="Header">
+      <div className="logoWrap" aria-hidden>
+        <div className="brandLogo">Budgeto</div>
+        {DEMO && <div className="logoSub">demo</div>}
       </div>
-      <div className="title">{title}</div>
-      <div className="spacer" />
+      {/* keep accessible page title for screen readers */}
+      <div className="srOnly">{title}</div>
     </header>
   )
 }
