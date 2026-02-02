@@ -122,12 +122,84 @@ function Header({ tab }: { tab: Tab }) {
   )
 }
 
+function Icon({ name }: { name: 'dashboard' | 'settings' | 'plus' }) {
+  if (name === 'plus') {
+    return (
+      <svg className="navAddIcon" viewBox="0 0 24 24" aria-hidden>
+        <path
+          d="M12 5v14M5 12h14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+  }
+
+  if (name === 'settings') {
+    return (
+      <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
+        <path
+          d="M12 15.6a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <path
+          d="M19.4 15a8 8 0 0 0 .1-1l1.6-1.2-1.6-2.8-1.9.6a7.7 7.7 0 0 0-1.7-1l-.3-2H9.4l-.3 2a7.7 7.7 0 0 0-1.7 1l-1.9-.6-1.6 2.8L5.5 14a8 8 0 0 0 .1 1L4 16.2 5.6 19l1.9-.6c.5.4 1.1.7 1.7 1l.3 2h5.2l.3-2c.6-.3 1.2-.6 1.7-1l1.9.6 1.6-2.8-1.6-1.2Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+  }
+
+  // dashboard
+  return (
+    <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
+      <path
+        d="M4 19V5M4 19h16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 16v-5M11 16V8M15 16v-3M19 16v-7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 function Nav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   return (
-    <nav className="nav">
-      <button className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Dashboard</button>
-      <button className={tab === 'add' ? 'active' : ''} onClick={() => setTab('add')}>+ Add</button>
-      <button className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Settings</button>
+    <nav className="nav" aria-label="Primary">
+      <button
+        className={tab === 'dashboard' ? 'navBtn active' : 'navBtn'}
+        onClick={() => setTab('dashboard')}
+      >
+        <Icon name="dashboard" />
+        <span className="navLabel">Dashboard</span>
+      </button>
+
+      <button className="navAdd" onClick={() => setTab('add')} aria-label="Add expense">
+        <Icon name="plus" />
+      </button>
+
+      <button
+        className={tab === 'settings' ? 'navBtn active' : 'navBtn'}
+        onClick={() => setTab('settings')}
+      >
+        <Icon name="settings" />
+        <span className="navLabel">Settings</span>
+      </button>
     </nav>
   )
 }
