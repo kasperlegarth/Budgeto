@@ -27,7 +27,7 @@ function categoryColor(category: string) {
   const hue = hashHue(category)
   return {
     dot: `hsl(${hue} 70% 45%)`,
-    tint: `hsla(${hue}, 70%, 55%, 0.16)`,
+    tint: `hsla(${hue}, 70%, 55%, 0.14)`,
   }
 }
 
@@ -177,7 +177,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
   return (
     <section className="page">
       <div className="card hero">
-        <div className="row" style={{ alignItems: 'center' }}>
+        <div className="row heroHeader">
           <div className="muted">{monthLabel(from)}</div>
           <div className="spacer" />
           <div className="seg">
@@ -215,7 +215,7 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         <button className="primary" onClick={onAdd}>Add expense</button>
       </div>
 
-      <div className="card" style={{ marginBottom: 12 }}>
+      <div className="card mb12">
         <div className="row">
           <h2>Top categories</h2>
           <span className="muted">{monthLabel(from)}</span>
@@ -228,8 +228,8 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         ) : (
           <ul className="list compact">
             {byCategory.map((c) => (
-              <li key={c.category} className="listItem compact" style={{ background: categoryColor(c.category).tint }}>
-                <div className="row" style={{ alignItems: 'center' }}>
+              <li key={c.category} className="listItem compact categoryItem" style={{ background: categoryColor(c.category).tint }}>
+                <div className="row rowCenter">
                   <span className="dot" style={{ background: categoryColor(c.category).dot }} />
                   <div className="strong">{c.category}</div>
                 </div>
@@ -247,11 +247,10 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         </div>
 
         <input
-          className="input"
+          className="input mt10"
           placeholder="Search (category, note, amount)…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ marginTop: 10 }}
         />
 
         {!filtered ? (
@@ -261,11 +260,13 @@ function Dashboard({ onAdd }: { onAdd: () => void }) {
         ) : (
           <ul className="list">
             {filtered.slice(0, 40).map((e) => (
-              <li key={e.id} className="listItem" style={{ background: categoryColor(e.category).tint }}>
+              <li key={e.id} className="listItem">
                 <div>
-                  <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+                  <div className="row rowCenter" style={{ gap: 8 }}>
                     <span className="dot" style={{ background: categoryColor(e.category).dot }} />
-                    <div className="strong">{e.category}</div>
+                    <span className="badge" style={{ background: categoryColor(e.category).tint }}>
+                      {e.category}
+                    </span>
                   </div>
                   <div className="muted small">{e.note || '—'}</div>
                 </div>
