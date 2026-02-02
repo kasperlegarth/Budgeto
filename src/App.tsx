@@ -142,11 +142,38 @@ function categoryColor(category: string) {
 
 type Tab = 'dashboard' | 'add' | 'settings'
 
+function tabFromHash(): Tab | null {
+  if (typeof window === 'undefined') return null
+  const h = window.location.hash.replace('#', '').trim()
+  return h === 'dashboard' || h === 'add' || h === 'settings' ? h : null
+}
+
 const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true'
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const [tab, setTab] = useState<Tab>(() => tabFromHash() ?? 'dashboard')
   const [lang, setLangState] = useState<Lang>(() => getLang())
+
+  // Keep tab in sync with URL hash so back/forward works.
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = tabFromHash()
+      if (next) setTab(next)
+    }
+
+    window.addEventListener('hashchange', onHashChange)
+    onHashChange()
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const navigate = (next: Tab) => {
+    if (typeof window === 'undefined') return
+
+    // Update URL (pushes history). hashchange listener drives state.
+    const desired = `#${next}`
+    if (window.location.hash !== desired) window.location.hash = desired
+    else setTab(next)
+  }
 
   // Seed demo data into a separate DB so it never pollutes real data.
   useEffect(() => {
@@ -209,8 +236,8 @@ export default function App() {
     <div className="app">
       <Header tab={tab} lang={lang} />
       <main className="main">
-        {tab === 'dashboard' && <Dashboard onAdd={() => setTab('add')} lang={lang} />}
-        {tab === 'add' && <AddExpense onDone={() => setTab('dashboard')} lang={lang} />}
+        {tab === 'dashboard' && <Dashboard onAdd={() => navigate('add')} lang={lang} />}
+        {tab === 'add' && <AddExpense onDone={() => navigate('dashboard')} lang={lang} />}
         {tab === 'settings' && (
           <Settings
             lang={lang}
@@ -221,7 +248,7 @@ export default function App() {
           />
         )}
       </main>
-      <Nav tab={tab} setTab={setTab} lang={lang} />
+      <Nav tab={tab} setTab={navigate} lang={lang} />
     </div>
   )
 }
