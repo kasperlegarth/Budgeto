@@ -82,7 +82,7 @@ html, body {
   position: relative;
   z-index: 1; /* sits above logo */
   padding-top: 34px; /* reveal logo initially, but content can scroll over it */
-  padding-bottom: 88px; /* space for floating nav */
+  padding-bottom: 100px; /* space for floating nav */
 }
 
 .page {
@@ -103,6 +103,7 @@ html, body {
   display: grid;
   gap: 10px;
   margin-bottom: 12px;
+  overflow: visible;
 }
 
 .seg {
@@ -203,6 +204,7 @@ html, body {
 .heroHeader { align-items: center; }
 .mb12 { margin-bottom: 12px; }
 .mt10 { margin-top: 10px; }
+.spacer { flex: 1; }
 
 .badge {
   display: inline-flex;

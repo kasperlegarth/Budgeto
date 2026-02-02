@@ -1,6 +1,6 @@
 export function Sparkline({ values, stroke = '#60A5FA' }: { values: number[]; stroke?: string }) {
-  const w = 160
-  const h = 44
+  const w = 110
+  const h = 40
   const pad = 4
   const max = Math.max(1, ...values)
   const min = Math.min(0, ...values)
@@ -31,7 +31,7 @@ export function Bars({ values }: { values: number[] }) {
   const bw = (w - pad * 2 - gap * (values.length - 1)) / values.length
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Weekly spending">
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Weekly spending" style={{ maxWidth: '100%', height: 'auto' }}>
       {values.map((v, i) => {
         const hh = ((v / max) * (h - pad * 2)) || 0
         const x = pad + i * (bw + gap)
