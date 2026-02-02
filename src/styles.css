@@ -23,6 +23,13 @@
 
 * { box-sizing: border-box; }
 
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 120ms;
+  --t-med: 220ms;
+}
+
 html, body {
   height: 100%;
   margin: 0;
@@ -96,6 +103,15 @@ html, body {
   padding-bottom: 100px; /* space for floating nav */
 }
 
+@keyframes pageIn {
+  from { opacity: 0.0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.main.tabAnimating .page {
+  animation: pageIn var(--t-med) var(--ease-out);
+}
+
 .page {
   padding: 14px;
   max-width: 720px;
@@ -108,6 +124,11 @@ html, body {
   border-radius: 22px;
   padding: 16px;
   box-shadow: var(--shadow-sm);
+  transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
+}
+
+@media (hover:hover) {
+  .card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
 }
 
 .hero {
@@ -163,7 +184,10 @@ html, body {
   margin-top: 10px;
 }
 
-.stackedPart { height: 100%; }
+.stackedPart {
+  height: 100%;
+  transition: width 420ms var(--ease-out);
+}
 
 .legend {
   display: flex;
@@ -293,7 +317,9 @@ button {
   box-shadow: 0 1px 0 rgba(17,24,39,0.03);
 }
 
-button:active { transform: translateY(0.5px); }
+button { transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out); }
+
+button:active { transform: translateY(0.5px) scale(0.99); }
 
 button.primary {
   border: 0;
@@ -320,6 +346,11 @@ button:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
   button:active { transform: none; }
 }
 
@@ -343,8 +374,13 @@ button:focus-visible {
   border: 1px solid rgba(17, 24, 39, 0.08);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 1px 0 rgba(17,24,39,0.03);
+  transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
 }
 .listItem.compact { padding: 10px; }
+
+@media (hover:hover) {
+  .listItem:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(17, 24, 39, 0.08); }
+}
 
 .right { text-align: right; }
 
@@ -361,6 +397,7 @@ button.mini {
   right: 12px;
   bottom: calc(78px + env(safe-area-inset-bottom));
   display: flex;
+  animation: toastIn var(--t-med) var(--ease-out);
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -372,6 +409,11 @@ button.mini {
   backdrop-filter: blur(10px);
 }
 .toastText { font-size: 13px; color: var(--text); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .toastBtn {
   width: auto;
   margin-top: 0;
@@ -426,14 +468,19 @@ button.mini {
   gap: 8px;
   min-height: 44px;
   color: rgba(17, 24, 39, 0.70);
+  transition: background var(--t-med) var(--ease-out), color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out);
 }
 
-.navItem:active { transform: translateY(0.5px); }
+.navItem:active { transform: translateY(0.5px) scale(0.99); }
 
 .navItem.active {
   background: linear-gradient(135deg, var(--primary-a12), rgba(255, 255, 255, 0.72));
   color: var(--text);
 }
+
+.navItem.active .navIcon { transform: scale(1.05); }
+
+.navIcon { transition: transform var(--t-med) var(--ease-out); }
 
 .navIcon,
 .navAddIcon {
@@ -473,3 +520,23 @@ button.mini {
 
 .navItemAdd .navIcon { width: 20px; height: 20px; }
 .navItemAdd .navLabel { display: none !important; }
+
+/* Charts */
+@keyframes barIn {
+  from { transform: scaleY(0.25); opacity: 0.0; }
+  to { transform: scaleY(1); opacity: 0.9; }
+}
+
+.bars .bar {
+  transform-origin: 50% 100%;
+  animation: barIn 520ms var(--ease-out) both;
+}
+
+@keyframes sparkDraw {
+  from { stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0.0; }
+  to { stroke-dasharray: 1 1; stroke-dashoffset: 0; opacity: 1; }
+}
+
+.spark path {
+  animation: sparkDraw 520ms var(--ease-out) both;
+}

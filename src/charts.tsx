@@ -1,4 +1,4 @@
-export function Sparkline({ values, stroke = '#60A5FA' }: { values: number[]; stroke?: string }) {
+export function Sparkline({ values, stroke = 'var(--accent)' }: { values: number[]; stroke?: string }) {
   const w = 110
   const h = 40
   const pad = 4
@@ -16,8 +16,15 @@ export function Sparkline({ values, stroke = '#60A5FA' }: { values: number[]; st
   const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ')
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Trend">
-      <path d={d} fill="none" stroke={stroke} strokeWidth={2.5} strokeLinecap="round" />
+    <svg
+      className="spark"
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      role="img"
+      aria-label="Trend"
+    >
+      <path d={d} fill="none" stroke={stroke} strokeWidth={2.5} strokeLinecap="round" pathLength={1} />
     </svg>
   )
 }
@@ -31,7 +38,15 @@ export function Bars({ values }: { values: number[] }) {
   const bw = (w - pad * 2 - gap * (values.length - 1)) / values.length
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Weekly spending" style={{ maxWidth: '100%', height: 'auto' }}>
+    <svg
+      className="bars"
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      role="img"
+      aria-label="Weekly spending"
+      style={{ maxWidth: '100%', height: 'auto' }}
+    >
       {values.map((v, i) => {
         const hh = ((v / max) * (h - pad * 2)) || 0
         const x = pad + i * (bw + gap)
@@ -39,6 +54,8 @@ export function Bars({ values }: { values: number[] }) {
         return (
           <rect
             key={i}
+            className="bar"
+            style={{ animationDelay: `${i * 35}ms` }}
             x={x}
             y={y}
             width={bw}
@@ -51,8 +68,8 @@ export function Bars({ values }: { values: number[] }) {
       })}
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2DD4BF" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop offset="0" stopColor="var(--primary)" />
+          <stop offset="1" stopColor="var(--accent)" />
         </linearGradient>
       </defs>
     </svg>

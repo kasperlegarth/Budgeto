@@ -153,6 +153,7 @@ const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.locatio
 export default function App() {
   const [tab, setTab] = useState<Tab>(() => tabFromHash() ?? 'dashboard')
   const [lang, setLangState] = useState<Lang>(() => getLang())
+  const [tabAnimating, setTabAnimating] = useState(false)
 
   // Keep tab in sync with URL hash so back/forward works.
   useEffect(() => {
@@ -165,6 +166,12 @@ export default function App() {
     onHashChange()
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
+
+  useEffect(() => {
+    setTabAnimating(true)
+    const t = setTimeout(() => setTabAnimating(false), 220)
+    return () => clearTimeout(t)
+  }, [tab])
 
   const navigate = (next: Tab) => {
     if (typeof window === 'undefined') return
@@ -235,7 +242,7 @@ export default function App() {
   return (
     <div className="app">
       <Header tab={tab} lang={lang} />
-      <main className="main">
+      <main className={tabAnimating ? 'main tabAnimating' : 'main'}>
         {tab === 'dashboard' && <Dashboard onAdd={() => navigate('add')} lang={lang} />}
         {tab === 'add' && <AddExpense onDone={() => navigate('dashboard')} lang={lang} />}
         {tab === 'settings' && (
