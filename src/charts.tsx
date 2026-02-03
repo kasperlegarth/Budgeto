@@ -31,7 +31,7 @@ export function Sparkline({ values, stroke = 'var(--accent)' }: { values: number
   )
 }
 
-export function Bars({ values }: { values: number[] }) {
+export function Bars({ values, ariaLabel = 'Weekly spending' }: { values: number[]; ariaLabel?: string }) {
   const w = 240
   const h = 84
   const pad = 10
@@ -46,7 +46,7 @@ export function Bars({ values }: { values: number[] }) {
       height={h}
       viewBox={`0 0 ${w} ${h}`}
       role="img"
-      aria-label="Weekly spending"
+      aria-label={ariaLabel}
       style={{ maxWidth: '100%', height: 'auto' }}
     >
       {values.map((v, i) => {
@@ -78,10 +78,16 @@ export function Bars({ values }: { values: number[] }) {
   )
 }
 
-export function StackedBar({ parts }: { parts: { label: string; value: number; color: string }[] }) {
+export function StackedBar({
+  parts,
+  ariaLabel = 'Category share',
+}: {
+  parts: { label: string; value: number; color: string }[]
+  ariaLabel?: string
+}) {
   const total = parts.reduce((s, p) => s + p.value, 0) || 1
   return (
-    <div className="stackedBar" role="img" aria-label="Category share">
+    <div className="stackedBar" role="img" aria-label={ariaLabel}>
       {parts
         .filter((p) => p.value > 0)
         .map((p) => (

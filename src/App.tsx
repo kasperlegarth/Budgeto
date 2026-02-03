@@ -36,6 +36,11 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     settings: 'Indstillinger',
     list: 'Udgifter',
     insights: 'Overblik',
+    overview: 'Overblik',
+    weekly: 'Ugentligt',
+    weeklySpending: 'Ugentligt forbrug',
+    categoryShare: 'Kategorifordeling',
+    searchDeleteUndo: 'Søg + slet + fortryd',
     addExpense: 'Tilføj udgift',
     thisMonth: 'Denne måned',
     trackedLocally: 'Gemmes lokalt · offline-first',
@@ -77,6 +82,11 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     settings: 'Settings',
     list: 'Expenses',
     insights: 'Insights',
+    overview: 'Overview',
+    weekly: 'Weekly',
+    weeklySpending: 'Weekly spending',
+    categoryShare: 'Category share',
+    searchDeleteUndo: 'Search + delete + undo',
     addExpense: 'Add expense',
     thisMonth: 'This month',
     trackedLocally: 'Stored locally · offline-first',
@@ -512,18 +522,18 @@ function Dashboard({ onAdd, onList, lang }: { onAdd: () => void; onList: () => v
 
       <div className="card mb12">
         <div className="row">
-          <h2>Overview</h2>
+          <h2>{t(lang, 'overview')}</h2>
           <span className="muted">{monthLabel(from, lang)}</span>
         </div>
 
         <div className="vizRow">
           <div className="vizCard">
-            <div className="muted small">Weekly</div>
-            <Bars values={weeklyBars.map((v) => Math.round(v / 100))} />
+            <div className="muted small">{t(lang, 'weekly')}</div>
+            <Bars ariaLabel={t(lang, 'weeklySpending')} values={weeklyBars.map((v) => Math.round(v / 100))} />
           </div>
           <div className="vizCard">
-            <div className="muted small">Category share</div>
-            <StackedBar parts={categoryShare} />
+            <div className="muted small">{t(lang, 'categoryShare')}</div>
+            <StackedBar ariaLabel={t(lang, 'categoryShare')} parts={categoryShare} />
             <div className="legend">
               {categoryShare.slice(0, 4).map((p) => (
                 <div key={p.label} className="legendItem">
@@ -650,7 +660,7 @@ function ExpensesList({ lang, onAdd }: { lang: Lang; onAdd: () => void }) {
 
         <div className="row" style={{ marginTop: 10 }}>
           <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
-          <span className="muted small">Search + delete + undo</span>
+          <span className="muted small">{t(lang, 'searchDeleteUndo')}</span>
         </div>
 
         <input

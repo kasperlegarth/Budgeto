@@ -149,7 +149,7 @@ export function Insights({ lang }: { lang: Lang }) {
           <span className="muted">{monthLabel(from, lang)}</span>
         </div>
         <div className="vizCard mt10">
-          <Bars values={weeklyBars.map((v) => Math.round(v / 100))} />
+          <Bars ariaLabel={lang === 'da' ? 'Ugentligt forbrug' : 'Weekly spending'} values={weeklyBars.map((v) => Math.round(v / 100))} />
         </div>
       </div>
 
@@ -161,7 +161,7 @@ export function Insights({ lang }: { lang: Lang }) {
 
         <div className="vizCard mt10">
           <div className="muted small">{lang === 'da' ? 'Andel' : 'Share'}</div>
-          <StackedBar parts={categoryShare} />
+          <StackedBar ariaLabel={lang === 'da' ? 'Kategorifordeling' : 'Category share'} parts={categoryShare} />
           <div className="legend">
             {categoryShare.slice(0, 5).map((p) => (
               <div key={p.label} className="legendItem">
