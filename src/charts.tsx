@@ -18,11 +18,13 @@ export function Sparkline({ values, stroke = 'var(--accent)' }: { values: number
   return (
     <svg
       className="spark"
-      width={w}
+      width="100%"
       height={h}
       viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
       role="img"
       aria-label="Trend"
+      style={{ maxWidth: '100%' }}
     >
       <path d={d} fill="none" stroke={stroke} strokeWidth={2.5} strokeLinecap="round" pathLength={1} />
     </svg>

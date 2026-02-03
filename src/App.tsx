@@ -31,6 +31,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     dashboard: 'Dashboard',
     add: 'Tilføj',
     settings: 'Indstillinger',
+    list: 'Udgifter',
     addExpense: 'Tilføj udgift',
     thisMonth: 'Denne måned',
     trackedLocally: 'Gemmes lokalt · offline-first',
@@ -70,6 +71,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     dashboard: 'Dashboard',
     add: 'Add',
     settings: 'Settings',
+    list: 'Expenses',
     addExpense: 'Add expense',
     thisMonth: 'This month',
     trackedLocally: 'Stored locally · offline-first',
@@ -140,12 +142,12 @@ function categoryColor(category: string) {
   }
 }
 
-type Tab = 'dashboard' | 'add' | 'settings'
+type Tab = 'dashboard' | 'list' | 'add' | 'settings'
 
 function tabFromHash(): Tab | null {
   if (typeof window === 'undefined') return null
   const h = window.location.hash.replace('#', '').trim()
-  return h === 'dashboard' || h === 'add' || h === 'settings' ? h : null
+  return h === 'dashboard' || h === 'list' || h === 'add' || h === 'settings' ? h : null
 }
 
 const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true'
@@ -243,7 +245,8 @@ export default function App() {
     <div className="app">
       <Header tab={tab} lang={lang} />
       <main className={tabAnimating ? 'main tabAnimating' : 'main'}>
-        {tab === 'dashboard' && <Dashboard onAdd={() => navigate('add')} lang={lang} />}
+        {tab === 'dashboard' && <Dashboard onAdd={() => navigate('add')} onList={() => navigate('list')} lang={lang} />}
+        {tab === 'list' && <ExpensesList lang={lang} onAdd={() => navigate('add')} />}
         {tab === 'add' && <AddExpense onDone={() => navigate('dashboard')} lang={lang} />}
         {tab === 'settings' && (
           <Settings
@@ -261,7 +264,14 @@ export default function App() {
 }
 
 function Header({ tab, lang }: { tab: Tab; lang: Lang }) {
-  const title = tab === 'dashboard' ? t(lang, 'dashboard') : tab === 'add' ? t(lang, 'add') : t(lang, 'settings')
+  const title =
+    tab === 'dashboard'
+      ? t(lang, 'dashboard')
+      : tab === 'list'
+        ? t(lang, 'list')
+        : tab === 'add'
+          ? t(lang, 'add')
+          : t(lang, 'settings')
   return (
     <header className="top" aria-label="Header">
       <div className="logoWrap" aria-hidden>
@@ -274,7 +284,7 @@ function Header({ tab, lang }: { tab: Tab; lang: Lang }) {
   )
 }
 
-function Icon({ name }: { name: 'dashboard' | 'settings' | 'plus' }) {
+function Icon({ name }: { name: 'dashboard' | 'list' | 'settings' | 'plus' }) {
   if (name === 'plus') {
     return (
       <svg className="navAddIcon" viewBox="0 0 24 24" aria-hidden>
@@ -305,6 +315,15 @@ function Icon({ name }: { name: 'dashboard' | 'settings' | 'plus' }) {
           strokeWidth="2"
           strokeLinejoin="round"
         />
+      </svg>
+    )
+  }
+
+  if (name === 'list') {
+    return (
+      <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
+        <path d="M8 6h12M8 12h12M8 18h12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
       </svg>
     )
   }
@@ -345,6 +364,15 @@ function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: 
 
         <button
           role="listitem"
+          className={tab === 'list' ? 'navItem active' : 'navItem'}
+          onClick={() => setTab('list')}
+        >
+          <Icon name="list" />
+          <span className="navLabel">{t(lang, 'list')}</span>
+        </button>
+
+        <button
+          role="listitem"
           className={tab === 'add' ? 'navItem navItemAdd active' : 'navItem navItemAdd'}
           onClick={() => setTab('add')}
           aria-label={t(lang, 'addExpense')}
@@ -368,24 +396,13 @@ function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: 
   )
 }
 
-function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
+function Dashboard({ onAdd, onList, lang }: { onAdd: () => void; onList: () => void; lang: Lang }) {
   const now = Date.now()
   const [monthTs, setMonthTs] = useState(() => startOfMonth(now))
   const from = useMemo(() => startOfMonth(monthTs), [monthTs])
   const to = useMemo(() => endOfMonth(monthTs), [monthTs])
 
   const [items, setItems] = useState<Expense[] | null>(null)
-  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
-  const [toastLeaving, setToastLeaving] = useState(false)
-  const closeToast = () => {
-    setToastLeaving(true)
-    setTimeout(() => {
-      setToast(null)
-      setToastLeaving(false)
-    }, 180)
-  }
-  const [query, setQuery] = useState('')
-  const [showEntries, setShowEntries] = useState(false)
 
   // Load monthly items (newest first)
   useEffect(() => {
@@ -404,24 +421,9 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
     }
   }, [from, to])
 
-  // Auto-hide toast (with exit animation)
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => closeToast(), 5000)
-    return () => clearTimeout(t)
-  }, [toast])
+  // (toast moved to ExpensesList)
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!items) return null
-    if (!q) return items
-    return items.filter((e) => {
-      const note = (e.note ?? '').toLowerCase()
-      const cat = (e.category ?? '').toLowerCase()
-      const amt = (e.amountOre / 100).toFixed(2)
-      return note.includes(q) || cat.includes(q) || amt.includes(q)
-    })
-  }, [items, query])
+  // (filtering + list moved to ExpensesList)
 
   const total = (items ?? []).reduce((sum, e) => sum + e.amountOre, 0)
 
@@ -500,7 +502,147 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
     return parts
   }, [byCategory])
 
+  // (delete-with-undo moved to ExpensesList)
+
+  return (
+    <section className="page">
+      <div className="card hero">
+        <div className="row heroHeader">
+          <div className="muted">{monthLabel(from, lang)}</div>
+          <div className="spacer" />
+          <div className="seg">
+            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, -1))} aria-label="Previous month">
+              ←
+            </button>
+            <button
+              className="segBtn"
+              type="button"
+              onClick={() => setMonthTs(startOfMonth(Date.now()))}
+              aria-label="Go to current month"
+            >
+              {t(lang, 'now')}
+            </button>
+            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, 1))} aria-label="Next month">
+              →
+            </button>
+          </div>
+        </div>
+
+        <div className="big">{formatDkk(total)}</div>
+        <div className="sparkUnder">
+          <Sparkline values={dailySeries.map((v) => Math.round(v / 100))} />
+        </div>
+
+        <div className="insights">
+          <div className="pill">
+            <div className="muted small">{t(lang, 'avgPerDay')}</div>
+            <div className="strong">{avgPerDay == null ? '—' : formatDkk(avgPerDay)}</div>
+          </div>
+          <div className="pill">
+            <div className="muted small">{t(lang, 'biggest')}</div>
+            <div className="strong">{biggest ? formatDkk(biggest.amountOre) : '—'}</div>
+          </div>
+        </div>
+
+        <div className="row" style={{ gap: 10 }}>
+          <button className="primary" onClick={onAdd}>{t(lang, 'addExpense')}</button>
+          <button className="ghost" onClick={onList} type="button">{t(lang, 'list')}</button>
+        </div>
+      </div>
+
+      <div className="card mb12">
+        <div className="row">
+          <h2>Overview</h2>
+          <span className="muted">{monthLabel(from, lang)}</span>
+        </div>
+
+        <div className="vizRow">
+          <div className="vizCard">
+            <div className="muted small">Weekly</div>
+            <Bars values={weeklyBars.map((v) => Math.round(v / 100))} />
+          </div>
+          <div className="vizCard">
+            <div className="muted small">Category share</div>
+            <StackedBar parts={categoryShare} />
+            <div className="legend">
+              {categoryShare.slice(0, 4).map((p) => (
+                <div key={p.label} className="legendItem">
+                  <span className="dot" style={{ background: p.color }} />
+                  <span className="muted small">{p.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="row rowCenter">
+          <h2>{t(lang, 'latest')}</h2>
+          <div className="spacer" />
+          <button className="ghost mini" type="button" onClick={onList}>
+            {t(lang, 'list')}
+          </button>
+        </div>
+
+        <div className="muted" style={{ marginTop: 10 }}>
+          {t(lang, 'topCategories')} · {t(lang, 'latest')} → {t(lang, 'list')}
+        </div>
+      </div>
+
+      {/* toast moved to ExpensesList */}
+    </section>
+  )
+}
+
+function ExpensesList({ lang, onAdd }: { lang: Lang; onAdd: () => void }) {
+  const [items, setItems] = useState<Expense[] | null>(null)
+  const [toast, setToast] = useState<{ text: string; undo?: () => Promise<void> } | null>(null)
+  const [toastLeaving, setToastLeaving] = useState(false)
+  const [query, setQuery] = useState('')
   const [leavingIds, setLeavingIds] = useState<Set<number>>(() => new Set())
+
+  const closeToast = () => {
+    setToastLeaving(true)
+    setTimeout(() => {
+      setToast(null)
+      setToastLeaving(false)
+    }, 180)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    db.expenses
+      .orderBy('createdAt')
+      .reverse()
+      .toArray()
+      .then((rows) => {
+        if (cancelled) return
+        setItems(rows)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Auto-hide toast (with exit animation)
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => closeToast(), 5000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!items) return null
+    if (!q) return items
+    return items.filter((e) => {
+      const note = (e.note ?? '').toLowerCase()
+      const cat = (e.category ?? '').toLowerCase()
+      const amt = (e.amountOre / 100).toFixed(2)
+      return note.includes(q) || cat.includes(q) || amt.includes(q)
+    })
+  }, [items, query])
 
   async function removeWithUndo(expense: Expense) {
     if (expense.id == null) return
@@ -537,114 +679,35 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
 
   return (
     <section className="page">
-      <div className="card hero">
-        <div className="row heroHeader">
-          <div className="muted">{monthLabel(from, lang)}</div>
-          <div className="spacer" />
-          <div className="seg">
-            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, -1))} aria-label="Previous month">
-              ←
-            </button>
-            <button
-              className="segBtn"
-              type="button"
-              onClick={() => setMonthTs(startOfMonth(Date.now()))}
-              aria-label="Go to current month"
-            >
-              {t(lang, 'now')}
-            </button>
-            <button className="segBtn" type="button" onClick={() => setMonthTs((t) => addMonths(t, 1))} aria-label="Next month">
-              →
-            </button>
-          </div>
-        </div>
-
-        <div className="row rowCenter" style={{ gap: 12 }}>
-          <div className="big">{formatDkk(total)}</div>
-          <div className="spacer" />
-          <Sparkline values={dailySeries.map((v) => Math.round(v / 100))} />
-        </div>
-
-        <div className="insights">
-          <div className="pill">
-            <div className="muted small">{t(lang, 'avgPerDay')}</div>
-            <div className="strong">{avgPerDay == null ? '—' : formatDkk(avgPerDay)}</div>
-          </div>
-          <div className="pill">
-            <div className="muted small">{t(lang, 'biggest')}</div>
-            <div className="strong">{biggest ? formatDkk(biggest.amountOre) : '—'}</div>
-          </div>
-        </div>
-
-        <div className="muted">{t(lang, 'trackedLocally')}</div>
-        <button className="primary" onClick={onAdd}>{t(lang, 'addExpense')}</button>
-      </div>
-
-      <div className="card mb12">
-        <div className="row">
-          <h2>Overview</h2>
-          <span className="muted">{monthLabel(from, lang)}</span>
-        </div>
-
-        <div className="vizRow">
-          <div className="vizCard">
-            <div className="muted small">Weekly</div>
-            <Bars values={weeklyBars.map((v) => Math.round(v / 100))} />
-          </div>
-          <div className="vizCard">
-            <div className="muted small">Category share</div>
-            <StackedBar parts={categoryShare} />
-            <div className="legend">
-              {categoryShare.slice(0, 4).map((p) => (
-                <div key={p.label} className="legendItem">
-                  <span className="dot" style={{ background: p.color }} />
-                  <span className="muted small">{p.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="card">
         <div className="row rowCenter">
-          <h2>{t(lang, 'latest')}</h2>
+          <h2>{t(lang, 'list')}</h2>
           <div className="spacer" />
-          <button className="ghost mini" type="button" onClick={() => setShowEntries((v) => !v)}>
-            {showEntries ? 'Hide' : 'Show'}
+          <button className="primary mini" type="button" onClick={onAdd}>
+            {t(lang, 'add')}
           </button>
         </div>
 
-        {!showEntries ? (
-          <div className="muted" style={{ marginTop: 10 }}>
-            Entries are hidden to keep the dashboard clean.
-          </div>
+        <div className="row" style={{ marginTop: 10 }}>
+          <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
+          <span className="muted small">Search + delete + undo</span>
+        </div>
+
+        <input
+          className="input mt10"
+          placeholder={t(lang, 'searchPlaceholder')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+
+        {!filtered ? (
+          <div className="muted">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="muted">{t(lang, 'noMatches')}</div>
         ) : (
-          <>
-            <div className="row" style={{ marginTop: 10 }}>
-              <span className="muted">{filtered?.length ?? items?.length ?? 0} {t(lang, 'entries')}</span>
-              <span className="muted small">Search + delete + undo</span>
-            </div>
-
-            <input
-              className="input mt10"
-              placeholder={t(lang, 'searchPlaceholder')}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </>
-        )}
-
-        {!showEntries ? null : (
-          <>
-            {!filtered ? (
-              <div className="muted">Loading…</div>
-            ) : filtered.length === 0 ? (
-              <div className="muted">{t(lang, 'noMatches')}</div>
-            ) : (
-              <ul className="list">
-                {filtered.slice(0, 40).map((e) => (
-                  <li key={e.id} className={leavingIds.has(e.id!) ? 'listItem leaving' : 'listItem'}>
+          <ul className="list">
+            {filtered.map((e) => (
+              <li key={e.id} className={leavingIds.has(e.id!) ? 'listItem leaving' : 'listItem'}>
                 <div>
                   <div className="row rowCenter" style={{ gap: 8 }}>
                     <span className="dot" style={{ background: categoryColor(e.category).dot }} />
@@ -662,10 +725,8 @@ function Dashboard({ onAdd, lang }: { onAdd: () => void; lang: Lang }) {
                   </button>
                 </div>
               </li>
-                ))}
-              </ul>
-            )}
-          </>
+            ))}
+          </ul>
         )}
       </div>
 
