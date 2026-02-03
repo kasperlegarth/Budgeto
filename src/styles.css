@@ -470,9 +470,9 @@ button.mini {
    Active item expands slightly and reveals label. */
 .navBar {
   pointer-events: auto;
-  width: min(620px, calc(100% - 24px));
+  width: min(680px, calc(100% - 24px));
   display: grid;
-  grid-template-columns: 1fr 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr auto 1fr 1fr;
   gap: 6px;
   padding: 8px;
   border-radius: 24px;
@@ -506,28 +506,24 @@ button.mini {
   color: var(--text);
 }
 
-.navItem.active .navIcon { transform: scale(1.05); }
+.navItem.active svg { transform: scale(1.05); }
 
-.navIcon { transition: transform var(--t-med) var(--ease-out); }
+.navItem svg { transition: transform var(--t-med) var(--ease-out); }
 
 .navIcon,
 .navAddIcon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   display: inline-block;
 }
 
-/* labels: hidden by default, shown on active.
-   Keeps the “clean” icon-first vibe from Dribbble. */
-.navLabel {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  display: none;
-}
+/* Hugeicons React renderer outputs an <svg> without our old classnames */
+.navItem svg { width: 22px; height: 22px; }
+.navAddInner svg { width: 22px; height: 22px; }
 
-.navItem.active .navLabel {
-  display: inline;
+/* No labels in bottom navigation (icon-only). */
+.navLabel {
+  display: none !important;
 }
 
 /* Add item: small gradient chip inside the pill */

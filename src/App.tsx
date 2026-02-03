@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Add01Icon, ChartLineData01Icon, DashboardBrowsingIcon, ListViewIcon, Settings01Icon } from '@hugeicons/core-free-icons'
 import { db, type Expense, DEFAULT_CATEGORIES, getAllCategories, getCustomCategories, saveCustomCategories, storageKey } from './db'
 import { formatDkk, startOfMonth, endOfMonth } from './lib'
 import { Bars, Sparkline, StackedBar } from './charts'
+import { Insights } from './insights'
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
@@ -32,6 +35,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     add: 'Tilføj',
     settings: 'Indstillinger',
     list: 'Udgifter',
+    insights: 'Overblik',
     addExpense: 'Tilføj udgift',
     thisMonth: 'Denne måned',
     trackedLocally: 'Gemmes lokalt · offline-first',
@@ -72,6 +76,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     add: 'Add',
     settings: 'Settings',
     list: 'Expenses',
+    insights: 'Insights',
     addExpense: 'Add expense',
     thisMonth: 'This month',
     trackedLocally: 'Stored locally · offline-first',
@@ -142,12 +147,12 @@ function categoryColor(category: string) {
   }
 }
 
-type Tab = 'dashboard' | 'list' | 'add' | 'settings'
+type Tab = 'dashboard' | 'list' | 'add' | 'insights' | 'settings'
 
 function tabFromHash(): Tab | null {
   if (typeof window === 'undefined') return null
   const h = window.location.hash.replace('#', '').trim()
-  return h === 'dashboard' || h === 'list' || h === 'add' || h === 'settings' ? h : null
+  return h === 'dashboard' || h === 'list' || h === 'add' || h === 'insights' || h === 'settings' ? h : null
 }
 
 const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true'
@@ -248,6 +253,7 @@ export default function App() {
         {tab === 'dashboard' && <Dashboard onAdd={() => navigate('add')} onList={() => navigate('list')} lang={lang} />}
         {tab === 'list' && <ExpensesList lang={lang} onAdd={() => navigate('add')} />}
         {tab === 'add' && <AddExpense onDone={() => navigate('dashboard')} lang={lang} />}
+        {tab === 'insights' && <Insights lang={lang} />}
         {tab === 'settings' && (
           <Settings
             lang={lang}
@@ -271,7 +277,9 @@ function Header({ tab, lang }: { tab: Tab; lang: Lang }) {
         ? t(lang, 'list')
         : tab === 'add'
           ? t(lang, 'add')
-          : t(lang, 'settings')
+          : tab === 'insights'
+            ? t(lang, 'insights')
+            : t(lang, 'settings')
   return (
     <header className="top" aria-label="Header">
       <div className="logoWrap" aria-hidden>
@@ -284,69 +292,8 @@ function Header({ tab, lang }: { tab: Tab; lang: Lang }) {
   )
 }
 
-function Icon({ name }: { name: 'dashboard' | 'list' | 'settings' | 'plus' }) {
-  if (name === 'plus') {
-    return (
-      <svg className="navAddIcon" viewBox="0 0 24 24" aria-hidden>
-        <path
-          d="M12 5v14M5 12h14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-
-  if (name === 'settings') {
-    return (
-      <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
-        <path
-          d="M12 15.6a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-        <path
-          d="M19.4 15a8 8 0 0 0 .1-1l1.6-1.2-1.6-2.8-1.9.6a7.7 7.7 0 0 0-1.7-1l-.3-2H9.4l-.3 2a7.7 7.7 0 0 0-1.7 1l-1.9-.6-1.6 2.8L5.5 14a8 8 0 0 0 .1 1L4 16.2 5.6 19l1.9-.6c.5.4 1.1.7 1.7 1l.3 2h5.2l.3-2c.6-.3 1.2-.6 1.7-1l1.9.6 1.6-2.8-1.6-1.2Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-      </svg>
-    )
-  }
-
-  if (name === 'list') {
-    return (
-      <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
-        <path d="M8 6h12M8 12h12M8 18h12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      </svg>
-    )
-  }
-
-  // dashboard
-  return (
-    <svg className="navIcon" viewBox="0 0 24 24" aria-hidden>
-      <path
-        d="M4 19V5M4 19h16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7 16v-5M11 16V8M15 16v-3M19 16v-7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
+function NavIcon({ icon }: { icon: any }) {
+  return <HugeiconsIcon icon={icon} size={22} color="currentColor" strokeWidth={1.8} />
 }
 
 function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: Lang }) {
@@ -357,18 +304,20 @@ function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: 
           role="listitem"
           className={tab === 'dashboard' ? 'navItem active' : 'navItem'}
           onClick={() => setTab('dashboard')}
+          aria-label={t(lang, 'dashboard')}
         >
-          <Icon name="dashboard" />
-          <span className="navLabel">{t(lang, 'dashboard')}</span>
+          <NavIcon icon={DashboardBrowsingIcon} />
+          <span className="srOnly">{t(lang, 'dashboard')}</span>
         </button>
 
         <button
           role="listitem"
           className={tab === 'list' ? 'navItem active' : 'navItem'}
           onClick={() => setTab('list')}
+          aria-label={t(lang, 'list')}
         >
-          <Icon name="list" />
-          <span className="navLabel">{t(lang, 'list')}</span>
+          <NavIcon icon={ListViewIcon} />
+          <span className="srOnly">{t(lang, 'list')}</span>
         </button>
 
         <button
@@ -378,18 +327,29 @@ function Nav({ tab, setTab, lang }: { tab: Tab; setTab: (t: Tab) => void; lang: 
           aria-label={t(lang, 'addExpense')}
         >
           <span className="navAddInner" aria-hidden>
-            <Icon name="plus" />
+            <NavIcon icon={Add01Icon} />
           </span>
-          <span className="navLabel">{t(lang, 'add')}</span>
+          <span className="srOnly">{t(lang, 'add')}</span>
+        </button>
+
+        <button
+          role="listitem"
+          className={tab === 'insights' ? 'navItem active' : 'navItem'}
+          onClick={() => setTab('insights')}
+          aria-label={t(lang, 'insights')}
+        >
+          <NavIcon icon={ChartLineData01Icon} />
+          <span className="srOnly">{t(lang, 'insights')}</span>
         </button>
 
         <button
           role="listitem"
           className={tab === 'settings' ? 'navItem active' : 'navItem'}
           onClick={() => setTab('settings')}
+          aria-label={t(lang, 'settings')}
         >
-          <Icon name="settings" />
-          <span className="navLabel">{t(lang, 'settings')}</span>
+          <NavIcon icon={Settings01Icon} />
+          <span className="srOnly">{t(lang, 'settings')}</span>
         </button>
       </div>
     </nav>
